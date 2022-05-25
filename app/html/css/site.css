@@ -1,0 +1,209 @@
+/*@import url('open-iconic/font/css/open-iconic-bootstrap.min.css');*/
+@import url('font-awesome/css/all.min.css');
+
+html, body {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    pointer-events: none;
+}
+
+* {
+    pointer-events: all;
+}
+
+.draggable {
+    -webkit-app-region: drag;
+}
+
+a, .btn-link {
+    color: #0366d6;
+}
+
+.btn-primary {
+    color: #fff;
+    background-color: #1b6ec2;
+    border-color: #1861ac;
+}
+
+.content {
+    padding-top: 1.1rem;
+}
+
+.valid.modified:not([type=checkbox]) {
+    outline: 1px solid #26b050;
+}
+
+.invalid {
+    outline: 1px solid red;
+}
+
+.validation-message {
+    color: red;
+}
+
+#blazor-error-ui {
+    background: lightyellow;
+    bottom: 0;
+    box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
+    display: none;
+    left: 0;
+    padding: 0.6rem 1.25rem 0.7rem 1.25rem;
+    position: fixed;
+    width: 100%;
+    z-index: 1000;
+}
+
+    #blazor-error-ui .dismiss {
+        cursor: pointer;
+        position: absolute;
+        right: 0.75rem;
+        top: 0.5rem;
+    }
+
+
+#artifact-badge {
+    position: absolute;
+    height: 30px;
+    width: 38px;
+    background-color: #003249;
+    border-radius: 4px 0 0 4px;
+    right: 0;
+    cursor: pointer;
+    border-width: 0;
+    padding: 2px;
+    box-shadow: -2px 2px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+
+}
+
+    #artifact-badge.expanded {
+        width: 130px;
+    }
+
+    #artifact-badge.hidden {
+        display: none;
+    }
+
+    #artifact-badge:focus,
+    #artifact-badge:active {
+        border: none;
+        box-shadow: none;
+        outline: 0;
+    }
+
+    #artifact-badge > #counter,
+    #artifact-badge > #counter-text {
+        color: white;
+        font-size: 15px;
+        font-weight: 500;
+        line-height: 24px;
+    }
+
+    #artifact-badge > #counter {
+        display: inline-block;
+    }
+
+    #artifact-badge > #counter-text {
+        display: none;
+    }
+
+    #artifact-badge.expanded > #counter-text {
+        display: inline-block;
+        margin-top: 4px;
+        margin-left: 7px;
+        
+    }
+
+#context-menu {
+    position: absolute;
+    top: 0;
+    right: 0;
+    height: 24px;
+    width: 24px;
+    border-radius: 12px;
+    background-color: rgba(255, 255, 255, 0.7);
+    text-align: center;
+}
+
+    #context-menu.closed {
+        display: none;
+    }
+
+    #context-menu > i {
+        line-height: 24px;
+        font-size: 21px;
+        color: black;
+        width: 20px;
+    }
+
+
+#artifact-badge * {
+    pointer-events: none;
+}
+
+#browser-window {
+    height: 100%;
+}
+
+#view-nav {
+    position: fixed;
+    height: 44px;
+    width: 100%;
+    z-index: 100;
+    background-color: white;
+    padding: 11px;
+}
+
+    #view-nav button {
+        height: 22px;
+        width: 22px;
+        border: none;
+        border-radius: 11px;
+        box-shadow: none;
+        outline: 0;
+        background-color: transparent;
+        padding: 0;
+    }
+
+    #view-nav button:hover {
+        background-color: lightgray;
+    }
+
+    #view-nav .fa {
+        clear: both;
+        vertical-align: top;
+        font-size: 18px;
+        line-height: 22px;
+    }
+
+    #view-nav button .button-text {
+        font-weight: 600;
+        font-size: 32px;
+        line-height: 32px;
+        clear: both;
+        vertical-align: top;
+        display: inline-block;
+        position: relative;
+        top: 1px;
+    }
+
+        #view-nav button .button-text.back {
+            margin-left: 10px;
+        }
+
+        #view-nav button .button-text.forward {
+            margin-right: 10px;
+        }
+
+#view-renderer {
+    position: fixed;
+    display: flex;
+    width: 100%;
+    height: calc(100% - 44px);
+    top: 44px;
+    z-index: 99;
+}
+
+.pull-right {
+    float: right;
+}
