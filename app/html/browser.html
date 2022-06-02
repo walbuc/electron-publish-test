@@ -1,0 +1,15 @@
+<div id="browser-window">
+    <div id="view-nav">
+        <button onclick="webviewBack();"><span class="fa fa-arrow-left"></span></button>
+        <button onclick="webviewForward();"><span class="fa fa-arrow-right"></span></button>
+        <button onclick="webviewReload();"><span class="fa fa-redo-alt"></span></button>
+    </div>
+    page
+    <webview id="view-renderer" src="@Url" title="Insiteflow content"></webview>
+</div>
+
+<link rel="stylesheet" href="./css/site.css" type="text/css">
+
+	<script>
+		require('../renderer/browser-renderer');
+	</script>

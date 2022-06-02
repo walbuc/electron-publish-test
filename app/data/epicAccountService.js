@@ -9,11 +9,12 @@ function EpicAccountService(listener) {
     logout: function () {
       //not implemented
     },
-    user: { name: '', password: '' },
+
     listenerloginInfoProvided: function (info) {
       this.user.username = info.username
       this.user.password = info.password
     },
+    user: { name: '', password: '' },
   }
 
   return EpicAccountService

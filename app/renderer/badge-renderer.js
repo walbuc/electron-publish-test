@@ -31,7 +31,6 @@ badgeView.addEventListener('mouseover', e => {
 })
 
 badgeView.addEventListener('mouseleave', e => {
-  console.log('me llama')
   badgeHoverLeave(e)
 })
 
@@ -44,6 +43,7 @@ badgeView.addEventListener('contextmenu', e => {
 })
 
 closeButtonView.addEventListener('click', e => {
+  console.log('me llama close')
   closeApplication(e)
 })
 
@@ -81,8 +81,8 @@ function contextMenuOpen() {
 function ToggleBrowser() {
   // constants
   // what
-  const baseUrl = NavManager.BaseUri
-  const fullUrl = `${baseUrl}Browser`
+  //const baseUrl = NavManager.BaseUri
+  //const fullUrl = `${baseUrl}Browser`
 
   if (!ContextMenuClosed) {
     contextMenuOpen()
@@ -92,7 +92,9 @@ function ToggleBrowser() {
     return
   }
 
-  mainProcess.PageManagerFactory.Browser.Show(fullUrl)
+  // check if we have practitioner id to
+  //
+  mainProcess.ShowBrowser()
 }
 
 function closeApplication() {

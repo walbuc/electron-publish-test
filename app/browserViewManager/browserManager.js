@@ -1,13 +1,12 @@
 const { BrowserWindow } = require('electron')
 
 function BrowserManagerFactory() {
-  var Window = null
+  var window = null
   //TODO: icon
   const browserOptions = {
     focusable: true,
     alwaysOnTop: false,
     skipTaskbar: false,
-
     webPreferences: {
       webviewTag: true,
       nodeIntegration: true,
@@ -32,18 +31,21 @@ function BrowserManagerFactory() {
   //             PageManager.Browser = await x;
   //         });
   //     }
-  Window = browser
+  window = browser
   const BrowserManager = {
+    window,
     show: function (url) {
-      Window.loadURL(url)
-      Window.maximize()
-      Window.show()
+      // Window.loadURL(url)
+      //load file??
+
+      window.maximize()
+      window.show()
     },
     close: function () {
-      Window.hide()
+      window.hide()
     },
     quit: function () {
-      Window.close()
+      window.close()
     },
   }
 

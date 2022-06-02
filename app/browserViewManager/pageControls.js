@@ -24,14 +24,14 @@ function PageManagerFactory() {
     },
     createBrowser: function () {
       PageManagerFactory.Browser = BrowserManagerFactory()
+      console.log(PageManagerFactory.Browser)
     },
     quit: function () {
       if (!PageManagerFactory.Badge || !PageManagerFactory.Browser) {
         return
       }
-      PageManagerFactory.Browser.quit()
       PageManagerFactory.Badge.quit()
-      //close app
+      PageManagerFactory.Browser.quit()
     },
   }
 

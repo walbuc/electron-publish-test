@@ -5,6 +5,8 @@ const { PageManagerFactory } = require('./browserViewManager/pageControls')
 const args = require('minimist')(process.argv.slice(2))
 
 const { AccountServiceFactory } = require('./data/accountService')
+const { BaseHealthServiceFactory } = require('./data/baseHealthService')
+
 // --if-facility-id – The facility ID used for both authentication and API operations (Required)
 
 // --if-facility-secret – The facility secret used to authenticate to the Insiteflow backend via OAuth (Required)
@@ -32,6 +34,7 @@ function getOptions() {
   const facilityId = args['if-facility-id']
   //Client Secret
   const facilitySecret = args['if-facility-secret']
+
   const ecPath = args['ec-path']
   const ecKey = args['ec-key']
   const ecAlgorithm = args['ec-algorithm'] || 'AES-128'
@@ -54,7 +57,21 @@ app.whenReady().then(() => {
   //compose validate
   const options = getOptions()
   console.log(options, 'e')
+
+  //const notificationService = NotificationServiceFactory()
   AccountServiceFactory(options)
+
+  const baseHealthService = BaseHealthServiceFactory(options)
+
+  baseHealthService.connect().then(() => {
+    baseHealthService.fetchFacilityClients()
+    // after getting the client I get icon and more info
+    //should init Badge.window
+
+    // After Badge init i hsould get a Login event from not service
+    // and use practitioner id
+    //
+  })
 
   const { screen } = require('electron')
   const primaryDisplay = screen.getPrimaryDisplay()
@@ -62,24 +79,15 @@ app.whenReady().then(() => {
   PageManagerFactory.DisplayWidth = primaryDisplay.size.width
 
   pageManager.createBadge()
-  remote.enable(PageManagerFactory.Badge.window.webContents)
+  pageManager.createBrowser()
 
-  //pageManager.createBrowser()
   PageManagerFactory.Badge.window.loadFile(`${__dirname}/html/badge.html`)
-  //PageManagerFactory.Badge.window.loadFile(`${__dirname}/html/browser.html`)
+
+  remote.enable(PageManagerFactory.Badge.window.webContents)
 })
 
-module.exports = { pageManager, PageManagerFactory }
+function showBrowser() {
+  PageManagerFactory.Browser.show(`${__dirname}/html/browser.html`)
+}
 
-// services
-//                 .AddScoped<IRestClient, RestClient>()
-//                 .AddScoped<ILocalStorageService, LocalStorageService>()
-//                 .AddScoped<IAlertService, AlertService>()
-//                 .AddScoped<IHttpService, HttpService>()
-//                 .AddScoped<IHealthServiceCoordinator, HealthServiceCoordinator>()
-
-//                 .AddScoped<IAccountService>((x) => new AccountServiceFactory(x.GetRequiredService<ILogger<AccountServiceFactory>>()).Create(Program.Options))
-//                 .AddScoped<IArtifactHealthService>((x) => new ArtifactHealthServiceFactory().Create(Program.Options))
-
-//                 .AddScoped<IFacilityService, FacilityService>()
-//                 .AddScoped<IBaseHealthService, BaseHealthService>();
+module.exports = { pageManager, PageManagerFactory, showBrowser }

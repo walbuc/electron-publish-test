@@ -69,7 +69,7 @@ function BadgeManagerFactory(
       }
     },
     quit: function () {
-      Window.close()
+      this.window.close()
     },
   }
 
