@@ -1,12 +1,17 @@
 const path = require('path')
 const { ipcRenderer, shell } = require('electron')
-
 const remote = require('@electron/remote')
 const mainProcess = remote.require('./main')
 
 const currentWindow = remote.getCurrentWindow()
+const browserView = document.querySelector('#view-renderer')
 
-console.log('Me llamo wlater')
+function init() {
+  mainProcess.getProviderContext().then(data => {
+    browserView.src = data.baseUrl
+  })
+}
+init()
 
 // @code {
 //     public string Url;

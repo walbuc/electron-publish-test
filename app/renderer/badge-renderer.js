@@ -43,7 +43,6 @@ badgeView.addEventListener('contextmenu', e => {
 })
 
 closeButtonView.addEventListener('click', e => {
-  console.log('me llama close')
   closeApplication(e)
 })
 
@@ -79,11 +78,6 @@ function contextMenuOpen() {
 }
 
 function ToggleBrowser() {
-  // constants
-  // what
-  //const baseUrl = NavManager.BaseUri
-  //const fullUrl = `${baseUrl}Browser`
-
   if (!ContextMenuClosed) {
     contextMenuOpen()
   }
@@ -93,26 +87,17 @@ function ToggleBrowser() {
   }
 
   // check if we have practitioner id to
-  //
-  mainProcess.ShowBrowser()
+  // TO DO
+  badgeView.classList.add('hidden')
+  mainProcess.showBrowser()
+}
+
+ipcRenderer.on('browser-close', toggleBadge)
+
+function toggleBadge() {
+  badgeView.classList.remove('hidden')
 }
 
 function closeApplication() {
   mainProcess.pageManager.quit()
 }
-
-// protected override Task OnInitializedAsync()
-// {
-//     int queryCount = ArtifactHealthService.GetQueryCount();
-//     Counter = queryCount;
-
-//     var timer = new System.Timers.Timer(20000);
-//     timer.Elapsed += async (s, e) =>
-//     {
-//         int queryCount = ArtifactHealthService.GetQueryCount();
-//         Counter = queryCount;
-//         await InvokeAsync(StateHasChanged);
-//     };
-//     timer.Start();
-//     return base.OnInitializedAsync();
-// }

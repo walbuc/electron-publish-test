@@ -20,32 +20,21 @@ function BrowserManagerFactory() {
   }
 
   var browser = new BrowserWindow(browserOptions)
-
   browser.removeMenu()
-  // what
-  // browser.onClose += Browser_OnClose;
-  // private static void Browser_OnClose()
-  //     {
-  //         Create().ContinueWith(async (x) =>
-  //         {
-  //             PageManager.Browser = await x;
-  //         });
-  //     }
+
   window = browser
   const BrowserManager = {
     window,
     show: function (url) {
-      // Window.loadURL(url)
-      //load file??
-
-      window.maximize()
-      window.show()
+      this.window.loadFile(url)
+      this.window.maximize()
+      this.window.show()
     },
     close: function () {
-      window.hide()
+      this.window.hide()
     },
     quit: function () {
-      window.close()
+      this.window.close()
     },
   }
 

@@ -8,7 +8,7 @@ const url = 'https://stage-fhir.insiteflow.com/connect/token'
 function BaseHealthServiceFactory({ facilityId, facilitySecret }) {
   const props = { token: null, clients: [] }
 
-  // subscribe
+  // subscribe to Login notification
 
   const BaseHealthService = {
     connect: function () {
@@ -52,14 +52,16 @@ function BaseHealthServiceFactory({ facilityId, facilitySecret }) {
       var data = { practitionerId: 'Testing' }
       var config = { token: this.getToken(), data }
 
-      client(
-        `https://stage-fhir.insiteflow.com/api/v1/${facilityId}/clients/${clients[0].id}/authorize`,
+      return client(
+        `https://stage-fhir.insiteflow.com/api/v1/facility/${facilityId}/clients/${clients[0].id}/authorize`,
         config,
       )
         .then(data => {
           console.log(data, 'PROVIDER CONTEXT')
+          return data
         })
         .catch(function (error) {
+          console.log(error)
           throw new Error(error)
         })
     },

@@ -52,6 +52,7 @@ function getOptions() {
 function validateOptions(options) {}
 
 const pageManager = PageManagerFactory()
+var baseHealthService = null
 
 app.whenReady().then(() => {
   //compose validate
@@ -61,7 +62,7 @@ app.whenReady().then(() => {
   //const notificationService = NotificationServiceFactory()
   AccountServiceFactory(options)
 
-  const baseHealthService = BaseHealthServiceFactory(options)
+  baseHealthService = BaseHealthServiceFactory(options)
 
   baseHealthService.connect().then(() => {
     baseHealthService.fetchFacilityClients()
@@ -82,12 +83,26 @@ app.whenReady().then(() => {
   pageManager.createBrowser()
 
   PageManagerFactory.Badge.window.loadFile(`${__dirname}/html/badge.html`)
-
   remote.enable(PageManagerFactory.Badge.window.webContents)
 })
 
 function showBrowser() {
   PageManagerFactory.Browser.show(`${__dirname}/html/browser.html`)
+  PageManagerFactory.Browser.window.on('close', function () {
+    pageManager.createBrowser()
+    PageManagerFactory.Badge.window.webContents.send('browser-close')
+  })
+  remote.enable(PageManagerFactory.Browser.window.webContents)
 }
 
-module.exports = { pageManager, PageManagerFactory, showBrowser }
+async function getProviderContext() {
+  const data = await baseHealthService.fetchProviderContexUrl()
+  return data
+}
+
+module.exports = {
+  pageManager,
+  PageManagerFactory,
+  showBrowser,
+  getProviderContext,
+}
