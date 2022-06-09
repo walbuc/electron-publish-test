@@ -26,6 +26,12 @@ var MouseHover = false
 //var BadgeToggle = () => (MouseHover ? 'expanded' : '')
 var pendingQueue = []
 
+// new code
+
+let showNotificationHistory = false
+const toggleClass = showNotificationHistory =>
+  showNotificationHistory ? '' : 'hidden'
+
 badgeView.addEventListener('mouseover', e => {
   badgeHover(e)
 })

@@ -52,7 +52,7 @@ function decryptionService(key, algorithmName, ecPath, usesIV = true) {
 
     parseTextAndIV: function (raw, blockSize) {
       const ivStringLength = this.numberOfCharactersToBase64(blockSize)
-      console.log(ivStringLength, 'ivStringLength')
+
       const iv = raw.substring(0, ivStringLength)
       if (IsBase64String(iv)) {
         return { Text: raw.substring(ivStringLength), IV: iv }

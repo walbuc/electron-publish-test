@@ -72,7 +72,7 @@ a, .btn-link {
     padding: 2px;
     box-shadow: -2px 2px rgba(0, 0, 0, 0.2);
     display: flex;
-    align-items: center;
+    align-items: flex-end;
 
 }
 
@@ -81,6 +81,14 @@ a, .btn-link {
     }
 
     #artifact-badge.hidden {
+        display: none;
+    }
+
+    .hidden {
+        display: none;
+    }
+
+    .nav-link.hidden {
         display: none;
     }
 
@@ -146,12 +154,12 @@ a, .btn-link {
 }
 
 #view-nav {
-    position: fixed;
-    height: 44px;
-    width: 100%;
+    display: flex;
+    height: 74px;
     z-index: 100;
     background-color: white;
     padding: 11px;
+    align-items: center;
 }
 
     #view-nav button {
@@ -187,23 +195,85 @@ a, .btn-link {
         top: 1px;
     }
 
-        #view-nav button .button-text.back {
-            margin-left: 10px;
-        }
+#view-nav button .button-text.back {
+    margin-left: 10px;
+}
 
-        #view-nav button .button-text.forward {
-            margin-right: 10px;
-        }
+#view-nav button .button-text.forward {
+    margin-right: 10px;
+}
 
 #view-renderer {
     position: fixed;
     display: flex;
     width: 100%;
     height: calc(100% - 44px);
-    top: 44px;
+    top: 48px;
     z-index: 99;
+}
+
+.web-view {
+    position: fixed;
+    display: flex;
+    width: 100%;
+    height: calc(100% - 44px);
+    top: 48px;
+    z-index: 99;
+}
+
+nav {
+    display: flex;
+    align-items: center;
+    z-index: 100;
+    background-color: white;
+    flex:1;
+    height: 74px;
+}
+
+.container-controls {
+    display: flex;
+    align-items: center;
 }
 
 .pull-right {
     float: right;
 }
+
+textarea, input, div, button {
+    outline: none;
+    margin: 0;
+  }
+  
+  .controls {
+    background-color:white;
+    z-index: 100;
+    flex: 1;
+    margin-right: -8px;
+  }
+  
+  button {
+    font-size: 14px;
+    background-color: rgb(181, 220, 216);
+    border: none;
+    padding: 0.5em 1em;
+  }
+  
+  button:hover {
+    background-color: rgb(156, 198, 192);
+  }
+  
+  button:active {
+    background-color: rgb(144, 182, 177);
+  }
+  
+  button:disabled {
+    background-color: rgb(196, 204, 202);
+  }
+  
+  .container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    min-width: 100vw;
+    position: relative;
+  }

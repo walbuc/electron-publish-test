@@ -1,6 +1,11 @@
 const chokidar = require('chokidar')
 var parser = require('xml-js')
 const { decryptionService } = require('./decryptionService')
+const {
+  notificationMessage,
+  notificationDetail,
+  notification,
+} = require('../notification/notification')
 const log = console.log.bind(console)
 
 function EpicLoginFileListener(
@@ -8,34 +13,74 @@ function EpicLoginFileListener(
   ecAlgorithm,
   ecKey,
   EventFileEncryptionUsesIV,
+  notificationService,
 ) {
   const EpicLoginFileListener = {
-    start: function () {
+    start() {
       console.log('Started', ecPath)
       console.log('Started', this.onNewFile)
-      chokidar.watch(`${ecPath}/**/*.xml`).on('add', this.onNewFile)
+      chokidar.watch(`${ecPath}/**/*.xml`).on('add', path => {
+        log(`File ${path} has been added`)
+        //DateTime lastWriteTime = File.GetCreationTime(e.FullPath);
+        const raw = decryptionService(
+          ecKey,
+          ecAlgorithm,
+          path,
+          EventFileEncryptionUsesIV,
+        )
+
+        var data = this.parseXML(raw)
+
+        // LastReadTime = lastWriteTime;
+        this.handleNotification(raw, data.Event)
+      })
     },
-    onNewFile: path => {
-      log(`File ${path} has been added`)
-      //DateTime lastWriteTime = File.GetCreationTime(e.FullPath);
-      const raw = decryptionService(
-        ecKey,
-        ecAlgorithm,
-        path,
-        EventFileEncryptionUsesIV,
-      )
-      var data = EpicLoginFileListener.parseXML(raw)
-      var user = EpicLoginFileListener.parseAuthData(data.AuthenticationData)
-      console.log(user, 'user')
-      // LoginInfoProvided.Invoke(new LoginInfo() { Username = user.Username, Password = user.Password });
-      // LastReadTime = lastWriteTime;
-      //listenerloginInfoProvided.
+    handleNotification(raw, type) {
+      // var msg = notificationMessage()
+      // var notifications = []
+      // notifications.push(
+      //   notification({ type, patient: this.parsePatient(raw) }),
+      // )
+      // msg.message = JSON.stringify(notifications)
+      var msg = notificationMessage()
+      switch (type) {
+        case 'Login':
+          var data = this.parseXML(raw)
+          // check
+          if (data.AuthenticationData) {
+            var user = this.parseAuthData(data.AuthenticationData)
+            this.listenerLoginInfoProvided(user)
+          }
+          msg.message = notification({ type, practitionerId: user.username })
+          notificationService.publish('login', JSON.stringify(msg))
+          break
+        case 'PatientOpen':
+          msg.message = notification({ type, patient: this.parsePatient(raw) })
+          notificationService.publish('PatientOpen', JSON.stringify(msg))
+          break
+        default:
+          break
+      }
+    },
+    parsePatient(xmlData) {
+      var result = notificationDetail()
+      var parsedJson = parser.xml2json(xmlData, { compact: true, spaces: 4 })
+      const xml = JSON.parse(parsedJson)
+      var root = xml['EpicStudyData']
+
+      var eventVal = root['Event']['_text']
+      if (eventVal == 'PatientOpen') {
+        result.mrn = root['PatientID']['_text']
+        result.dob = root['PatientBirthDate']['_text']
+        result.firstname = root['PatientName']['_text']
+      }
+      return result
     },
     parseXML: function (raw) {
       var parsedJson = parser.xml2json(raw, { compact: true, spaces: 4 })
       const xml = JSON.parse(parsedJson)
       var root = xml['EpicStudyData']
-      console.log(root, 'eee')
+
       var eventVal = root['Event']['_text']
       if (eventVal === 'Login' || eventVal === 'Logout') {
         var authData = root['AuthenticationData']['_text']

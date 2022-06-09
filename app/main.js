@@ -6,6 +6,9 @@ const args = require('minimist')(process.argv.slice(2))
 
 const { AccountServiceFactory } = require('./data/accountService')
 const { BaseHealthServiceFactory } = require('./data/baseHealthService')
+const {
+  NotificationServiceFactory,
+} = require('./notification/notificationService')
 
 // --if-facility-id – The facility ID used for both authentication and API operations (Required)
 
@@ -49,41 +52,39 @@ function getOptions() {
 // Client secret: required
 //private static string[] ValidEventFileEncryptionTypeOptions = new string[] { "AES-128", "AES-256" };
 
+// to do re implement validation
 function validateOptions(options) {}
 
 const pageManager = PageManagerFactory()
+const notificationService = NotificationServiceFactory()
 var baseHealthService = null
+//compose validate
+const options = getOptions()
+console.log(options, 'e')
+
+console.log(notificationService, 'notificationService')
+AccountServiceFactory(options, notificationService)
+baseHealthService = BaseHealthServiceFactory(options, notificationService)
 
 app.whenReady().then(() => {
-  //compose validate
-  const options = getOptions()
-  console.log(options, 'e')
-
-  //const notificationService = NotificationServiceFactory()
-  AccountServiceFactory(options)
-
-  baseHealthService = BaseHealthServiceFactory(options)
-
   baseHealthService.connect().then(() => {
     baseHealthService.fetchFacilityClients()
     // after getting the client I get icon and more info
     //should init Badge.window
-
+    pageManager.createBadge()
+    pageManager.createBrowser()
     // After Badge init i hsould get a Login event from not service
     // and use practitioner id
-    //
+    notificationService.on('login', () => {
+      PageManagerFactory.Badge.window.loadFile(`${__dirname}/html/badge.html`)
+      remote.enable(PageManagerFactory.Badge.window.webContents)
+    })
   })
 
   const { screen } = require('electron')
   const primaryDisplay = screen.getPrimaryDisplay()
   PageManagerFactory.DisplayHeight = primaryDisplay.size.height
   PageManagerFactory.DisplayWidth = primaryDisplay.size.width
-
-  pageManager.createBadge()
-  pageManager.createBrowser()
-
-  PageManagerFactory.Badge.window.loadFile(`${__dirname}/html/badge.html`)
-  remote.enable(PageManagerFactory.Badge.window.webContents)
 })
 
 function showBrowser() {
@@ -95,14 +96,33 @@ function showBrowser() {
   remote.enable(PageManagerFactory.Browser.window.webContents)
 }
 
-async function getProviderContext() {
-  const data = await baseHealthService.fetchProviderContexUrl()
-  return data
-}
+// async function getProviderContext() {
+//   const data = await baseHealthService.fetchProviderContexUrl()
+//   return data
+// }
+
+const getProviderContext = (function () {
+  // const props = { practitionerId: null }
+
+  // notificationService.on('login', data => {
+  //   console.log('PRACTITIONER ID', data)
+  //   // props.practitionerId = data.practitionerId
+  //   props.practitionerId = 'Testing'
+  // })
+
+  return async function () {
+    const data = await baseHealthService.fetchProviderContexUrl()
+    return data
+  }
+})()
+
+console.log(getProviderContext, 'getProviderContext')
 
 module.exports = {
   pageManager,
   PageManagerFactory,
   showBrowser,
   getProviderContext,
+  notificationService,
+  baseHealthService,
 }

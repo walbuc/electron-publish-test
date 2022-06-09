@@ -1,7 +1,5 @@
 function EpicAccountService(listener) {
-  console.log(listener, 'listener')
-  listener.start()
-
+  const user = { username: '', password: '' }
   const EpicAccountService = {
     login: function () {
       //not implemented
@@ -9,14 +7,14 @@ function EpicAccountService(listener) {
     logout: function () {
       //not implemented
     },
-
-    listenerloginInfoProvided: function (info) {
-      this.user.username = info.username
-      this.user.password = info.password
+    listenerLoginInfoProvided: function (info) {
+      user.username = info.username
+      user.password = info.password
     },
-    user: { name: '', password: '' },
   }
-
+  listener.listenerLoginInfoProvided =
+    EpicAccountService.listenerLoginInfoProvided
+  listener.start()
   return EpicAccountService
 }
 

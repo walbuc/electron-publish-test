@@ -6,9 +6,33 @@ const mainProcess = remote.require('./main')
 const currentWindow = remote.getCurrentWindow()
 const browserView = document.querySelector('#view-renderer')
 
+const patient1Tab = document.querySelector('#patient-1-tab')
+const patient1View = document.querySelector('#patient-1-renderer')
+
+const patientsStack = []
+
+async function getPatientContext() {
+  mainProcess.notificationService.on('PatientOpen', async data => {
+    const patientdata =
+      await mainProcess.baseHealthService.fetchPatientContextUrl(data)
+    patient1View.src = patientdata.baseUrl
+    patient1Tab.classList.remove('hidden')
+  })
+}
+
+// wip
+function displayPatient(data) {
+  const count = patientsStack.length
+  if (count === 0) {
+    patient1View.src = data.baseUrl
+    patient1Tab.classList.remove('hidden')
+  }
+}
+
 function init() {
   mainProcess.getProviderContext().then(data => {
     browserView.src = data.baseUrl
+    getPatientContext()
   })
 }
 init()
