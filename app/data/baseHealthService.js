@@ -88,7 +88,7 @@ function BaseHealthServiceFactory(
       const clients = this.getFacilityClients()
       const data = {
         practitionerId: this.getPractiotionerId(),
-        patientId: '51506039',
+        patientId: patient.mrn
       }
       var config = { token: this.getToken(), data }
       return client(
@@ -96,6 +96,9 @@ function BaseHealthServiceFactory(
         config,
       )
         .then(data => {
+          data.patient = {}
+          data.patient.firstname = patient.firstname
+          data.patient.lastname = patient.lastname
           console.log(data, 'PATIENT CONTEXT CALL')
           return data
         })
