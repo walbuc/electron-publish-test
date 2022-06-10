@@ -2,24 +2,52 @@ const path = require('path')
 const { ipcRenderer, shell } = require('electron')
 const remote = require('@electron/remote')
 const mainProcess = remote.require('./main')
+const app = remote.app
 
 const currentWindow = remote.getCurrentWindow()
 const browserView = document.querySelector('#view-renderer')
-
+const refreshButton = document.querySelector('#webview-refresh')
+const backButton = document.querySelector('#webview-back')
+const forwardButton = document.querySelector('#webview-forward')
 const patient1Tab = document.querySelector('#patient-1-tab')
 const patient1View = document.querySelector('#patient-1-renderer')
 
 const patientsStack = []
 
+function getActiveWebview() {
+  return document.querySelector('.tab-content .active webview')
+}
+
+refreshButton.addEventListener('click', e =>{
+  activeWebview = getActiveWebview();
+  if (activeWebview) {
+    activeWebview.reload()
+  }
+})
+
+backButton.addEventListener('click', e =>{
+  activeWebview = getActiveWebview();
+  if (activeWebview && activeWebview.canGoBack()) {
+    activeWebview.goBack()
+  }
+})
+
+forwardButton.addEventListener('click', e =>{
+  activeWebview = getActiveWebview();
+  if (activeWebview && activeWebview.canGoForward()) {
+    activeWebview.goForward()
+  }
+})
+
 async function getPatientContext() {
   mainProcess.notificationService.on('PatientOpen', async data => {
+    patient1Tab.innerHTML = data.patient.lastname + ", " + data.patient.firstname
     const patientdata =
       await mainProcess.baseHealthService.fetchPatientContextUrl(data)
     patient1View.src = patientdata.baseUrl
     patient1Tab.classList.remove('hidden')
   })
 }
-
 // wip
 function displayPatient(data) {
   const count = patientsStack.length

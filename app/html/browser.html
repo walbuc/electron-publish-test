@@ -1,15 +1,18 @@
 <div id="browser-window">
     <div class="container-controls">
     <div id="view-nav">
-        <button onclick="webviewBack();"><span class="fa fa-arrow-left"></span></button>
-        <button onclick="webviewForward();"><span class="fa fa-arrow-right"></span></button>
-        <button onclick="webviewReload();"><span class="fa fa-redo-alt"></span></button>
+        <button id="webview-back"><span class="fa fa-arrow-left"></span></button>
+        <button id="webview-forward"><span class="fa fa-arrow-right"></span></button>
+        <button id="webview-refresh"><span class="fa fa-redo-alt"></span></button>
     </div>
     <nav>
         <div class="nav nav-tabs controls" id="nav-tab" role="tablist">
           <button class="nav-link active" id="nav-home-tab" data-bs-toggle="tab" data-bs-target="#nav-home" type="button" role="tab" aria-controls="nav-home" aria-selected="true">Dashboard</button>
-          <button class="nav-link hidden" id="patient-1-tab" data-bs-toggle="tab" data-bs-target="#patient-1" type="button" role="tab" aria-controls="nav-profile" aria-selected="false">Patient 1</button>
-          <button class="nav-link hidden" id="patient-2-tab" data-bs-toggle="tab" data-bs-target="#patient-2" type="button" role="tab" aria-controls="nav-contact" aria-selected="false">Patient 2</button>
+          <button class="nav-link hidden" id="patient-1-tab" data-bs-toggle="tab" data-bs-target="#patient-1" type="button" role="tab" aria-controls="nav-patient1" aria-selected="false">Patient 1</button>
+          <button class="nav-link hidden" id="patient-2-tab" data-bs-toggle="tab" data-bs-target="#patient-2" type="button" role="tab" aria-controls="nav-patient2" aria-selected="false">Patient 2</button>
+          <button class="nav-link hidden" id="patient-3-tab" data-bs-toggle="tab" data-bs-target="#patient-2" type="button" role="tab" aria-controls="nav-patient3" aria-selected="false">Patient 3</button>
+          <button class="nav-link hidden" id="patient-4-tab" data-bs-toggle="tab" data-bs-target="#patient-2" type="button" role="tab" aria-controls="nav-patient4" aria-selected="false">Patient 4</button>
+          <button class="nav-link hidden" id="patient-5-tab" data-bs-toggle="tab" data-bs-target="#patient-2" type="button" role="tab" aria-controls="nav-patient5" aria-selected="false">Patient 5</button>
         </div>
     </nav>
 
@@ -19,11 +22,20 @@
         <div class="tab-pane fade show active" id="nav-home" role="tabpanel" aria-labelledby="nav-home-tab">
             <webview id="view-renderer" title="Insiteflow content" ></webview>
         </div>
-        <div class="tab-pane fade " id="patient-1" role="tabpanel" aria-labelledby="nav-profile-tab">
+        <div class="tab-pane fade " id="patient-1" role="tabpanel" aria-labelledby="nav-patient1-tab">
             <webview id="patient-1-renderer" title="Patient" class="web-view"></webview>
         </div>
-        <div class="tab-pane fade" id="patient-2" role="tabpanel" aria-labelledby="nav-contact-tab">
-            <webview id="patient-1-renderer" title="Patient" class="web-view"></webview>
+        <div class="tab-pane fade" id="patient-2" role="tabpanel" aria-labelledby="nav-patient2-tab">
+            <webview id="patient-2-renderer" title="Patient" class="web-view"></webview>
+        </div>
+        <div class="tab-pane fade" id="patient-3" role="tabpanel" aria-labelledby="nav-patient3-tab">
+            <webview id="patient-3-renderer" title="Patient" class="web-view"></webview>
+        </div>
+        <div class="tab-pane fade" id="patient-4" role="tabpanel" aria-labelledby="nav-patient4-tab">
+            <webview id="patient-4-renderer" title="Patient" class="web-view"></webview>
+        </div>
+        <div class="tab-pane fade" id="patient-5" role="tabpanel" aria-labelledby="nav-patient5-tab">
+            <webview id="patient-5-renderer" title="Patient" class="web-view"></webview>
         </div>
     </div>
   

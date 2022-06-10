@@ -23,7 +23,7 @@ function PageManagerFactory() {
       )
     },
     createBrowser: function () {
-      PageManagerFactory.Browser = BrowserManagerFactory()
+      PageManagerFactory.Browser = BrowserManagerFactory(PageManagerFactory.DisplayWidth, PageManagerFactory.DisplayHeight)
     },
     quit: function () {
       if (!PageManagerFactory.Badge || !PageManagerFactory.Browser) {
