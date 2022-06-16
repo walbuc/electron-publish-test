@@ -84,7 +84,6 @@ function BaseHealthServiceFactory(
         practitionerId: this.getPractiotionerId(),
         patientId: patient.mrn,
       }
-      console.log(data, 'basehealth. fetch patient context aca')
       var config = { token: this.getToken(), data }
       return client(
         `https://stage-fhir.insiteflow.com/api/v1/facility/${facilityId}/clients/${clients[0].id}/authorize`,

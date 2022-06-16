@@ -3,7 +3,7 @@ remote.initialize()
 const { app } = require('electron')
 const { PageManagerFactory } = require('./browserViewManager/pageControls')
 const args = require('minimist')(process.argv.slice(2))
-
+const console = require('console')
 const { AccountServiceFactory } = require('./data/accountService')
 const { BaseHealthServiceFactory } = require('./data/baseHealthService')
 const {
@@ -11,6 +11,9 @@ const {
 } = require('./notification/notificationService')
 const { longPollingFactory } = require('./notification/longPolling')
 const { getEventsOptions } = require('./utils/constants')
+
+app.commandLine.appendSwitch('remote-debugging-port', '9222')
+app.console = new console.Console(process.stdout, process.stderr)
 
 // --if-facility-id – The facility ID used for both authentication and API operations (Required)
 

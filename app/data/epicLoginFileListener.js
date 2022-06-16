@@ -8,9 +8,11 @@ const {
 } = require('../notification/notification')
 const log = console.log.bind(console)
 
-// var fs = require('fs');
-// var filePath = 'c:/book/discovery.docx';
-// fs.unlinkSync(filePath);
+function removeFile() {
+  // var fs = require('fs');
+  // var filePath = 'c:/book/discovery.docx';
+  // fs.unlinkSync(filePath);
+}
 
 function EpicLoginFileListener(
   ecPath,
@@ -81,7 +83,9 @@ function EpicLoginFileListener(
       if (eventVal == 'PatientOpen') {
         result.mrn = root['PatientID']['_text']
         result.dob = root['PatientBirthDate']['_text']
-        result.firstname = root['PatientName']['_text']
+        var nameParts = root['PatientName']['_text'].split(',')
+        result.lastname = nameParts[0]
+        result.firstname = nameParts.slice(1).join(' ')
       }
       return result
     },

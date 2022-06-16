@@ -1,15 +1,42 @@
 const remote = require('@electron/remote')
 const mainProcess = remote.require('./main')
-
+const app = remote.app
 const currentWindow = remote.getCurrentWindow()
 const browserView = document.querySelector('#view-renderer')
-
 const navigationBar = document.querySelector('#nav-tab')
 const navigationTabContent = document.querySelector('#nav-tabContent')
+const refreshButton = document.querySelector('#webview-refresh')
+const backButton = document.querySelector('#webview-back')
+const forwardButton = document.querySelector('#webview-forward')
 
 var patientsStack = []
 
 var count = 1
+
+function getActiveWebview() {
+  return document.querySelector('.tab-content .active webview')
+}
+
+refreshButton.addEventListener('click', e => {
+  const activeWebview = getActiveWebview()
+  if (activeWebview) {
+    activeWebview.reload()
+  }
+})
+
+backButton.addEventListener('click', e => {
+  const activeWebview = getActiveWebview()
+  if (activeWebview && activeWebview.canGoBack()) {
+    activeWebview.goBack()
+  }
+})
+
+forwardButton.addEventListener('click', e => {
+  const activeWebview = getActiveWebview()
+  if (activeWebview && activeWebview.canGoForward()) {
+    activeWebview.goForward()
+  }
+})
 
 async function getPatientContext() {
   mainProcess.notificationService.on('PatientOpen', async data => {
@@ -25,8 +52,6 @@ async function getPatientContext() {
 }
 
 function removePatientView(patient) {
-  console.log('Entro en remove')
-  console.log(patientsStack)
   removeNodes(patient.mrn)
   patientsStack = patientsStack.filter(
     p => p.chartOpenEvent.patient.mrn !== patient.mrn,
@@ -36,10 +61,8 @@ function removePatientView(patient) {
 
 function removeNodes(mrn) {
   const patient = patientsStack.find(p => p.chartOpenEvent.patient.mrn === mrn)
-  console.log(patient, 'FOUND PATIENT')
   patient.btn.remove()
   patient.view.remove()
-  console.log(patient, 'FOUND PATIENT')
 }
 
 function getOldest(patients) {
@@ -67,7 +90,6 @@ function displayPatientView(data, chartOpenEvent) {
 
 function createButton({ chartOpenEvent = {} }) {
   var btn = document.createElement('button')
-
   btn.innerText = `${chartOpenEvent.patient.firstname} ${chartOpenEvent.patient.lastname}`
   btn.classList.add('nav-link')
   btn.id = 'patient-1-tab'

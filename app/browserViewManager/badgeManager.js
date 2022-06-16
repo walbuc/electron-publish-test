@@ -46,7 +46,7 @@ function BadgeManagerFactory(
     width: CollapsedContentWidth,
     height: ContentHeight,
     x: CollapsedPositionOff,
-    y: DisplayHeight / 2,
+    y: DisplayHeight / 2 - ContentHeight,
   })
 
   const BadgeManager = {
@@ -57,7 +57,7 @@ function BadgeManagerFactory(
           width: ContentWidth,
           height: ContentHeight,
           x: PositionOff,
-          y: DisplayHeight / 2,
+          y: DisplayHeight / 2 - ContentHeight,
         })
       } else {
         // Window.setBounds({
