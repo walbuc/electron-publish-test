@@ -1,94 +1,119 @@
-// using Insiteflow.ArtifactBadge.Models;
-// using Insiteflow.Desktop.Boilerplate.Systems.Notification;
-// using Microsoft.Extensions.Configuration;
-// using Microsoft.Extensions.Hosting;
+const {
+  notificationMessage,
+  notification,
+} = require('../notification/notification')
+const { client } = require('../utils/api-client')
 
-// function longPolling(config, notificationService) {
-//     const longPolling = {}
+function longPollingFactory(
+  configOptions,
+  notificationService,
+  baseHealthService,
+  eventsOptions,
+) {
+  const longPolling = {}
+  // move to private prop
+  longPolling.stopService = false
 
-//     longPolling.start = function ()  {
+  longPolling.start = function () {
+    if (configOptions.isCernerIntegrationEnabled) {
+      this.main()
+    }
+  }
+  longPolling.end = function () {
+    this.stopService = true
+  }
+  longPolling.parseResponse = function (data) {
+    const m = data.message ? JSON.parse(data.message) : null
+    if (m) {
+      const notificationMessageArray = m.map(n => {
+        console.log('parsing response', n)
+        return {
+          notificationMessage: notificationMessage({
+            message: notification({
+              practitionerId: n.PractitionerId,
+              deviceId: n.DeviceId,
+              type: n.Type,
+              patient: n.Patient
+                ? {
+                    mrn: n.Patient.Mrn,
+                    lastname: n.Patient.Lastname,
+                    firstname: n.Patient.Firstname,
+                    dob: n.Patient.Dob,
+                  }
+                : {},
+            }),
+          }),
+          type: n.Type,
+        }
+      })
 
-//     }
-//     longPolling.end = function () {}
+      return notificationMessageArray
+    }
+    return []
+  }
+  longPolling.handleNotification = function (data) {
+    const notificationMessageArray = this.parseResponse(data)
+    notificationMessageArray.forEach(({ notificationMessage, type }) => {
+      switch (type) {
+        case eventsOptions.login:
+          notificationService.publish(
+            'login',
+            JSON.stringify(notificationMessage),
+          )
+          break
+        case eventsOptions.patientOpen:
+          notificationService.publish(
+            'PatientOpen',
+            JSON.stringify(notificationMessage),
+          )
+          break
+        case eventsOptions.patientClose:
+          notificationService.publish(
+            'PatientClose',
+            JSON.stringify(notificationMessage),
+          )
+          break
+        default:
+          break
+      }
+    })
+  }
 
-//     longPolling.doWork = function ( ) {
+  longPolling.main = async function () {
+    while (true && !this.stopService) {
+      var hadErr = false
+      const token = baseHealthService.getToken()
+      console.log('requesting...')
+      var data = {}
+      var config = { token, data, timeout: 50000 }
 
-//     }
+      // hardcoded
+      configOptions.deviceId = 'WALTER-DESKTOP'
 
-// }
+      await client(
+        `https://stage-fhir.insiteflow.com/api/v1/facility/${configOptions.facilityId}/${configOptions.deviceId}/listen`,
+        config,
+      )
+        .then(data => {
+          this.handleNotification(data)
+        })
+        .catch(function (error) {
+          if (error.code !== 'ECONNABORTED') {
+            hadErr = true
+            throw new Error(error)
+          }
+          // else {
+          //   throw new Error(error)
+          // }
+        })
 
-// module.exports = {longPolling}
+      if (hadErr) {
+        break
+      }
+    }
+  }
 
-// {
-//     public class LongPollingService : IHostedService, IDisposable
-//     {
-//         private readonly ILogger<LongPollingService> _logger;
-//         private readonly INotificationService _notificationService;
-//         private readonly IConfiguration _configuration;
-//         //private readonly StartOptions _startOptions;
-//         private int executionCount = 0;
-//         private Timer _timer = null!;
+  return longPolling
+}
 
-//         public LongPollingService(
-//             ILogger<LongPollingService> logger,
-//             INotificationService notificationService,
-//             IConfiguration configuration)
-//         {
-//             _logger = logger;
-//             _notificationService = notificationService;
-//             _configuration = configuration;
-//             // _startOptions = startOptions;
-//         }
-
-//         public Task StartAsync(CancellationToken stoppingToken)
-//         {
-//             if (StartOptions.Instance.IsCernerIntegrationEnabled)
-//             {
-//                 _logger.LogInformation("Timed Hosted Service running.");
-
-//                 _timer = new Timer(DoWork, null, TimeSpan.Zero,
-//                     TimeSpan.FromSeconds(5));
-//             }
-
-//             return Task.CompletedTask;
-//         }
-
-//         private async void DoWork(object? state)
-//         {
-//             try
-//             {
-//                 var count = Interlocked.Increment(ref executionCount);
-
-//                 var content = ""; //await _notificationService.Fetch();
-
-//                 if (!string.IsNullOrEmpty(content))
-//                 {
-//                     _logger.LogInformation(
-//                         "Timed Hosted Service is working. Content: " + content);
-//                     await _notificationService.PublishAsync("notification", content);
-//                 }
-
-//                 _logger.LogInformation(
-//                     "Timed Hosted Service is working. Count: {Count}", count);
-//             }
-//             catch (Exception e)
-//             {
-//                 _logger.LogInformation(
-//                     "Timed Hosted Service is working. Error: " + e.Message);
-//             }
-//         }
-
-//         public Task StopAsync(CancellationToken stoppingToken)
-//         {
-//             console.log("Timed Hosted Service is stopping.");
-//             _timer?.Change(Timeout.Infinite, 0);
-
-//             return Task.CompletedTask;
-//         }
-
-//         public void Dispose()
-//         {
-//             _timer?.Dispose();
-//         }
-//     }
-// }
+module.exports = { longPollingFactory }

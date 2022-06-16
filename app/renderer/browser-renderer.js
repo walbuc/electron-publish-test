@@ -1,32 +1,109 @@
-const path = require('path')
-const { ipcRenderer, shell } = require('electron')
 const remote = require('@electron/remote')
 const mainProcess = remote.require('./main')
 
 const currentWindow = remote.getCurrentWindow()
 const browserView = document.querySelector('#view-renderer')
 
-const patient1Tab = document.querySelector('#patient-1-tab')
-const patient1View = document.querySelector('#patient-1-renderer')
+const navigationBar = document.querySelector('#nav-tab')
+const navigationTabContent = document.querySelector('#nav-tabContent')
 
-const patientsStack = []
+var patientsStack = []
+
+var count = 1
 
 async function getPatientContext() {
   mainProcess.notificationService.on('PatientOpen', async data => {
-    const patientdata =
+    const patientData =
       await mainProcess.baseHealthService.fetchPatientContextUrl(data)
-    patient1View.src = patientdata.baseUrl
-    patient1Tab.classList.remove('hidden')
+    displayPatientView(patientData, data)
+  })
+
+  mainProcess.notificationService.on('PatientClose', data => {
+    const { patient } = data
+    removePatientView(patient)
   })
 }
 
-// wip
-function displayPatient(data) {
-  const count = patientsStack.length
-  if (count === 0) {
-    patient1View.src = data.baseUrl
-    patient1Tab.classList.remove('hidden')
+function removePatientView(patient) {
+  console.log('Entro en remove')
+  console.log(patientsStack)
+  removeNodes(patient.mrn)
+  patientsStack = patientsStack.filter(
+    p => p.chartOpenEvent.patient.mrn !== patient.mrn,
+  )
+  count = patientsStack.length
+}
+
+function removeNodes(mrn) {
+  const patient = patientsStack.find(p => p.chartOpenEvent.patient.mrn === mrn)
+  console.log(patient, 'FOUND PATIENT')
+  patient.btn.remove()
+  patient.view.remove()
+  console.log(patient, 'FOUND PATIENT')
+}
+
+function getOldest(patients) {
+  const oldest = patients.reduce((acc, patient) => {
+    if (acc) {
+      return Date.parse(patient.addedTm) < Date.parse(acc) ? patient : acc
+    }
+    return patient
+  }, null)
+  return oldest
+}
+
+function displayPatientView(data, chartOpenEvent) {
+  const allData = { ...data, chartOpenEvent, addedTm: Date.now() }
+  if (count < 5) {
+    count = patientsStack.push(allData)
+    addPatientView(allData)
+  } else {
+    const oldest = getOldest(patientsStack)
+    const patient = oldest.chartOpenEvent.patient
+    removePatientView(patient)
+    displayPatientView(data, chartOpenEvent)
   }
+}
+
+function createButton({ chartOpenEvent = {} }) {
+  var btn = document.createElement('button')
+
+  btn.innerText = `${chartOpenEvent.patient.firstname} ${chartOpenEvent.patient.lastname}`
+  btn.classList.add('nav-link')
+  btn.id = 'patient-1-tab'
+  btn.setAttribute('data-bs-toggle', 'tab')
+  btn.setAttribute('data-bs-target', `#patient-${chartOpenEvent.patient.mrn}`)
+  btn.type = 'button'
+  btn.setAttribute('role', 'tab')
+  btn.setAttribute('aria-controls', 'nav-profile')
+  btn.setAttribute('aria-selected', 'false')
+  return btn
+}
+
+function createWebView({ baseUrl, chartOpenEvent = {} }) {
+  const parent = document.createElement('div')
+  parent.classList.add('tab-pane', 'fade')
+  parent.id = `patient-${chartOpenEvent.patient.mrn}`
+  parent.setAttribute('role', 'tabpanel')
+  parent.setAttribute('aria-labelledby', 'nav-profile-tab')
+
+  const child = document.createElement('webview')
+  child.id = `patient-${chartOpenEvent.patient.mrn}-renderer`
+  child.classList.add('web-view')
+  child.title = 'Patient'
+  child.src = baseUrl
+
+  parent.appendChild(child)
+  return parent
+}
+
+function addPatientView(patient) {
+  const btn = createButton(patient)
+  const view = createWebView(patient)
+  navigationBar.appendChild(btn)
+  navigationTabContent.appendChild(view)
+  patient.btn = btn
+  patient.view = view
 }
 
 function init() {
@@ -36,78 +113,3 @@ function init() {
   })
 }
 init()
-
-// @code {
-//     public string Url;
-//     bool Loaded = false;
-
-//     private void Hide()
-//     {
-//         if (PageManager.Browser is null)
-//         {
-//             return;
-//         }
-
-//         PageManager.Browser.Close();
-//     }
-
-//     @* protected override async Task OnInitializedAsync()
-//     {
-//         if (!Loaded)
-//         {
-//             Url = new(await JS.InvokeAsync<string>("getLocalFileUrl"));
-//             Loaded = true;
-//         }
-//         await base.OnInitializedAsync();
-//     } *@
-
-//     protected override void OnInitialized()
-//     {
-//         if (!Loaded)
-//         {
-//             Url = ArtifactHealthService.GetUrl(null);
-//             Loaded = true;
-//         }
-//         base.OnInitialized();
-//     }
-
-//     protected override async Task OnAfterRenderAsync(bool firstRender)
-// 	{
-// 		if(firstRender)
-// 		{
-//             if (!Loaded)
-//             {
-//                 Url = new(await JS.InvokeAsync<string>("getLocalFileUrl"));
-//                 Loaded = true;
-//             }
-
-// 			//await JS.InvokeAsync<bool>("UtilityTest.testFunc");
-
-//             @* var timer = new System.Timers.Timer(2000);
-//             timer.Elapsed += async (s, e) =>
-//             {
-//                 if (pendingQueue.Count > 0)
-//                 {
-//                     var nextItem = pendingQueue.Dequeue();
-
-//                     var patient = nextItem[0].Patient;
-//                     if (patient != null)
-//                     {
-//                         var relevantData = patient.Firstname + " " + patient.Lastname;
-
-//                         await JS.InvokeVoidAsync("alert", $"Hello {relevantData}!");
-
-//                         await JS.InvokeVoidAsync("healthgorilla.forward", relevantData);
-//                         //var success = result == "true";
-
-//                         var result2 = await JS.InvokeAsync<string>("fuu", relevantData);
-//                         var success2 = result2 == "true";
-//                     }
-
-//                 }
-//             };
-//             timer.Start(); *@
-// 		}
-// 		await base.OnAfterRenderAsync(firstRender);
-// 	}
-// }

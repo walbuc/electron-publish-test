@@ -15,11 +15,11 @@ function BaseHealthServiceFactory(
   { facilityId, facilitySecret },
   notificationService,
 ) {
-  const props = { token: null, clients: [], practitionerId: 'Testing' }
+  const props = { token: null, clients: [], practitionerId: null }
 
   notificationService.on('login', data => {
     console.log(data, 'login emitter')
-    //props.practitionerId = data.practitionerId
+    props.practitionerId = data.practitionerId
   })
 
   const BaseHealthService = {
@@ -58,10 +58,9 @@ function BaseHealthServiceFactory(
         })
     },
     fetchProviderContexUrl: function () {
-      // Only if login event === if practitionerId
+      // Only if login event triggered
       const clients = this.getFacilityClients()
       const practitionerId = this.getPractiotionerId()
-      // Hardcoded
       var data = { practitionerId }
       var config = { token: this.getToken(), data }
 
@@ -70,7 +69,7 @@ function BaseHealthServiceFactory(
         config,
       )
         .then(data => {
-          console.log(data, 'PROVIDER CONTEXT')
+          console.log(data, 'PROVIDER CONTEXT AUTHORIZE')
           return data
         })
         .catch(function (error) {
@@ -80,23 +79,19 @@ function BaseHealthServiceFactory(
     },
     fetchPatientContextUrl({ patient }) {
       // if getPractiotionerId is not null
-      // const data = {
-      //   practitionerId: this.getPractiotionerId(),
-      //   patientId: patient.mrn,
-      // }
-      // mock data
       const clients = this.getFacilityClients()
       const data = {
         practitionerId: this.getPractiotionerId(),
-        patientId: '51506039',
+        patientId: patient.mrn,
       }
+      console.log(data, 'basehealth. fetch patient context aca')
       var config = { token: this.getToken(), data }
       return client(
         `https://stage-fhir.insiteflow.com/api/v1/facility/${facilityId}/clients/${clients[0].id}/authorize`,
         config,
       )
         .then(data => {
-          console.log(data, 'PATIENT CONTEXT CALL')
+          console.log(data, 'PATIENT CONTEXT CALL AUTHORIZE')
           return data
         })
         .catch(function (error) {

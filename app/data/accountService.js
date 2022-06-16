@@ -1,7 +1,7 @@
 const { EpicAccountService } = require('./epicAccountService')
 const { EpicLoginFileListener } = require('./epicLoginFileListener')
 
-function AccountServiceFactory(options, notificationService) {
+function AccountServiceFactory(options, notificationService, eventOptions) {
   switch (options.integration) {
     case 'epic':
       return EpicAccountService(
@@ -11,8 +11,11 @@ function AccountServiceFactory(options, notificationService) {
           options.ecKey,
           options.EventFileEncryptionUsesIV,
           notificationService,
+          eventOptions,
         ),
       )
+    case 'cerner':
+      break
     default:
       throw new Error('Not valid integration value')
   }

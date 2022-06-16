@@ -8,12 +8,17 @@ const {
 } = require('../notification/notification')
 const log = console.log.bind(console)
 
+// var fs = require('fs');
+// var filePath = 'c:/book/discovery.docx';
+// fs.unlinkSync(filePath);
+
 function EpicLoginFileListener(
   ecPath,
   ecAlgorithm,
   ecKey,
   EventFileEncryptionUsesIV,
   notificationService,
+  eventsOptions,
 ) {
   const EpicLoginFileListener = {
     start() {
@@ -44,7 +49,7 @@ function EpicLoginFileListener(
       // msg.message = JSON.stringify(notifications)
       var msg = notificationMessage()
       switch (type) {
-        case 'Login':
+        case eventsOptions.login:
           var data = this.parseXML(raw)
           // check
           if (data.AuthenticationData) {
@@ -54,9 +59,13 @@ function EpicLoginFileListener(
           msg.message = notification({ type, practitionerId: user.username })
           notificationService.publish('login', JSON.stringify(msg))
           break
-        case 'PatientOpen':
+        case eventsOptions.patientOpen:
           msg.message = notification({ type, patient: this.parsePatient(raw) })
           notificationService.publish('PatientOpen', JSON.stringify(msg))
+          break
+        case eventsOptions.patientClose:
+          msg.message = notification({ type, patient: this.parsePatient(raw) })
+          notificationService.publish('PatientClose', JSON.stringify(msg))
           break
         default:
           break

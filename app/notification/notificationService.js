@@ -15,8 +15,10 @@ function NotificationServiceFactory(config, client) {
       const msg = JSON.parse(data)
       if (msg.message) {
         //const content = msg.message ? JSON.parse(msg.message) : null
+
         const content = msg.message ?? null
         props.notifications.push(content)
+
         return emitter.emit(channel, content)
       }
       return emitter

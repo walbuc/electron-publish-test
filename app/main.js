@@ -9,6 +9,8 @@ const { BaseHealthServiceFactory } = require('./data/baseHealthService')
 const {
   NotificationServiceFactory,
 } = require('./notification/notificationService')
+const { longPollingFactory } = require('./notification/longPolling')
+const { getEventsOptions } = require('./utils/constants')
 
 // --if-facility-id – The facility ID used for both authentication and API operations (Required)
 
@@ -33,11 +35,8 @@ const {
 // Scope: facility-api
 
 function getOptions() {
-  // Client ID:
   const facilityId = args['if-facility-id']
-  //Client Secret
   const facilitySecret = args['if-facility-secret']
-
   const ecPath = args['ec-path']
   const ecKey = args['ec-key']
   const ecAlgorithm = args['ec-algorithm'] || 'AES-128'
@@ -55,16 +54,23 @@ function getOptions() {
 // to do re implement validation
 function validateOptions(options) {}
 
+const options = getOptions()
+// is there a default option?
+options.isCernerIntegrationEnabled =
+  options.integration.toLowerCase() === 'cerner'
+const eventsOptions = getEventsOptions(options.integration)
 const pageManager = PageManagerFactory()
 const notificationService = NotificationServiceFactory()
-var baseHealthService = null
-//compose validate
-const options = getOptions()
-console.log(options, 'e')
 
-console.log(notificationService, 'notificationService')
-AccountServiceFactory(options, notificationService)
-baseHealthService = BaseHealthServiceFactory(options, notificationService)
+AccountServiceFactory(options, notificationService, eventsOptions)
+const baseHealthService = BaseHealthServiceFactory(options, notificationService)
+
+const longPollingService = longPollingFactory(
+  options,
+  notificationService,
+  baseHealthService,
+  eventsOptions,
+)
 
 app.whenReady().then(() => {
   baseHealthService.connect().then(() => {
@@ -79,6 +85,8 @@ app.whenReady().then(() => {
       PageManagerFactory.Badge.window.loadFile(`${__dirname}/html/badge.html`)
       remote.enable(PageManagerFactory.Badge.window.webContents)
     })
+
+    longPollingService.start()
   })
 
   const { screen } = require('electron')
@@ -96,27 +104,12 @@ function showBrowser() {
   remote.enable(PageManagerFactory.Browser.window.webContents)
 }
 
-// async function getProviderContext() {
-//   const data = await baseHealthService.fetchProviderContexUrl()
-//   return data
-// }
-
 const getProviderContext = (function () {
-  // const props = { practitionerId: null }
-
-  // notificationService.on('login', data => {
-  //   console.log('PRACTITIONER ID', data)
-  //   // props.practitionerId = data.practitionerId
-  //   props.practitionerId = 'Testing'
-  // })
-
   return async function () {
     const data = await baseHealthService.fetchProviderContexUrl()
     return data
   }
 })()
-
-console.log(getProviderContext, 'getProviderContext')
 
 module.exports = {
   pageManager,
