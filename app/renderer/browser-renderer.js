@@ -42,14 +42,12 @@ forwardButton.addEventListener('click', e => {
 
 async function getPatientContext() {
   mainProcess.notificationService.on('PatientOpen', async data => {
-    console.log(data, 'Chart Open event data')
     const patientData =
       await mainProcess.baseHealthService.fetchPatientContextUrl(data)
     displayPatientView(patientData, data)
   })
 
   mainProcess.notificationService.on('PatientClose', data => {
-    console.log(data, 'patient close')
     const { patient } = data
     removePatientView(patient)
   })
@@ -90,7 +88,6 @@ function displayPatientView(data, chartOpenEvent) {
   }
   if (count < 5) {
     const newPatient = addPatientView({ ...allData })
-    console.log(newPatient, 'newPatient')
     const patiensStack = [...lss.getPatientsStack(), { ...newPatient }]
     count = patiensStack.length
     lss.setPatientsStack(patiensStack)
@@ -103,7 +100,6 @@ function displayPatientView(data, chartOpenEvent) {
 }
 
 function createButton({ chartOpenEvent = {} }) {
-  console.log('Create button', chartOpenEvent)
   var btn = document.createElement('button')
   btn.innerText = `${chartOpenEvent.patient.firstname} ${chartOpenEvent.patient.lastname}`
   btn.classList.add('nav-link')
@@ -118,7 +114,6 @@ function createButton({ chartOpenEvent = {} }) {
 }
 
 function createWebView({ baseUrl, chartOpenEvent = {} }) {
-  console.log('Create button', baseUrl, chartOpenEvent)
   const parent = document.createElement('div')
   parent.classList.add('tab-pane', 'fade')
   parent.id = `patient-${chartOpenEvent.patient.mrn}`
