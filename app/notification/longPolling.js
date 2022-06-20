@@ -11,7 +11,6 @@ function longPollingFactory(
   eventsOptions,
 ) {
   const longPolling = {}
-  // move to private prop
   longPolling.stopService = false
 
   longPolling.start = function () {
@@ -26,7 +25,7 @@ function longPollingFactory(
     const m = data.message ? JSON.parse(data.message) : null
     if (m) {
       const notificationMessageArray = m.map(n => {
-        console.log('parsing response', n)
+        console.log('PARSING RESPONSE', n)
         return {
           notificationMessage: notificationMessage({
             message: notification({
@@ -58,6 +57,12 @@ function longPollingFactory(
         case eventsOptions.login:
           notificationService.publish(
             'login',
+            JSON.stringify(notificationMessage),
+          )
+          break
+        case eventsOptions.logout:
+          notificationService.publish(
+            'logout',
             JSON.stringify(notificationMessage),
           )
           break

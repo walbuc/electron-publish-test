@@ -1,4 +1,5 @@
 const remote = require('@electron/remote/main')
+const pipe = require('lodash/fp/flow')
 remote.initialize()
 const { app } = require('electron')
 const { PageManagerFactory } = require('./browserViewManager/pageControls')
@@ -10,7 +11,12 @@ const {
   NotificationServiceFactory,
 } = require('./notification/notificationService')
 const { longPollingFactory } = require('./notification/longPolling')
-const { getEventsOptions } = require('./utils/constants')
+const {
+  getEventsOptions,
+  CERNER_INTEGRATION,
+  EPIC_INTEGRATION,
+} = require('./utils/constants')
+const { LocalStorageFactory } = require('./data/localStorageService')
 
 app.commandLine.appendSwitch('remote-debugging-port', '9222')
 app.console = new console.Console(process.stdout, process.stderr)
@@ -43,31 +49,69 @@ function getOptions() {
   const ecPath = args['ec-path']
   const ecKey = args['ec-key']
   const ecAlgorithm = args['ec-algorithm'] || 'AES-128'
-  const integration = args.integration
+  const integration = args.integration || 'cerner'
 
   return { facilityId, facilitySecret, ecPath, ecKey, ecAlgorithm, integration }
 }
 
-// integration required
-// if epic => validate path, algotithm optonal
-// Client ID: required
-// Client secret: required
 //private static string[] ValidEventFileEncryptionTypeOptions = new string[] { "AES-128", "AES-256" };
 
-// to do re implement validation
-function validateOptions(options) {}
+function validateIntegration(options) {
+  const { integration } = options
+  const validOptions = [CERNER_INTEGRATION, EPIC_INTEGRATION]
 
-const options = getOptions()
-// is there a default option?
-options.isCernerIntegrationEnabled =
-  options.integration.toLowerCase() === 'cerner'
+  const valid = validOptions.includes(integration)
+  if (valid) {
+    return Object.assign({}, options)
+  }
+  throw new Error('Supported integration options are' + validOptions.join(', '))
+}
+
+function validatePath(options) {
+  const { ecPath, isEpicIntegrationEnabled } = options
+  if (isEpicIntegrationEnabled() && !ecPath) {
+    throw new Error('ec-path is required.')
+  }
+  return Object.assign({}, options, {})
+}
+
+const isEpicIntegrationEnabled = option => o => {
+  return Object.assign({}, o, {
+    isEpicIntegrationEnabled: () => o.integration.toLowerCase() === option,
+  })
+}
+
+const isCernerIntegrationEnabled = option => o => {
+  return Object.assign({}, o, {
+    isCernerIntegrationEnabled: () => o.integration.toLowerCase() === option,
+  })
+}
+
+const required = key => options => {
+  if (options[key]) {
+    return Object.assign({}, options, {})
+  }
+  throw new Error(`${key} is required`)
+}
+
+const validateInput = pipe(
+  validateIntegration,
+  isCernerIntegrationEnabled(CERNER_INTEGRATION),
+  isEpicIntegrationEnabled(EPIC_INTEGRATION),
+  validatePath,
+  required('facilityId'),
+  required('facilitySecret'),
+)
+
+const options = validateInput(getOptions())
+
 const eventsOptions = getEventsOptions(options.integration)
-const pageManager = PageManagerFactory()
+const localStorage = LocalStorageFactory()
+const pageManager = PageManagerFactory(localStorage)
 const notificationService = NotificationServiceFactory()
 
 AccountServiceFactory(options, notificationService, eventsOptions)
 const baseHealthService = BaseHealthServiceFactory(options, notificationService)
-
 const longPollingService = longPollingFactory(
   options,
   notificationService,
@@ -79,7 +123,7 @@ app.whenReady().then(() => {
   baseHealthService.connect().then(() => {
     baseHealthService.fetchFacilityClients()
     // after getting the client I get icon and more info
-    //should init Badge.window
+    // should init Badge.window
     pageManager.createBadge()
     pageManager.createBrowser()
     // After Badge init i hsould get a Login event from not service
@@ -114,6 +158,17 @@ const getProviderContext = (function () {
   }
 })()
 
+notificationService.on('logout', async data => {
+  await baseHealthService.revoke()
+  if (PageManagerFactory.Browser) {
+    PageManagerFactory.Browser.quit()
+  }
+})
+
+notificationService.on('PatientClose', async data => {
+  await baseHealthService.revoke(data)
+})
+
 module.exports = {
   pageManager,
   PageManagerFactory,
@@ -121,4 +176,5 @@ module.exports = {
   getProviderContext,
   notificationService,
   baseHealthService,
+  localStorage,
 }
