@@ -79,24 +79,29 @@ function BaseHealthServiceFactory(
     },
     fetchPatientContextUrl({ patient }) {
       // if getPractiotionerId is not null
-      const clients = this.getFacilityClients()
-      const data = {
-        practitionerId: this.getPractiotionerId(),
-        patientId: patient.mrn,
+      const practitionerId = this.getPractiotionerId()
+      if (practitionerId) {
+        const clients = this.getFacilityClients()
+        const data = {
+          practitionerId: this.getPractiotionerId(),
+          patientId: patient.mrn,
+        }
+        var config = { token: this.getToken(), data }
+        return client(
+          `https://stage-fhir.insiteflow.com/api/v1/facility/${facilityId}/clients/${clients[0].id}/authorize`,
+          config,
+        )
+          .then(data => {
+            console.log(data, 'PATIENT CONTEXT CALL AUTHORIZE')
+            return data
+          })
+          .catch(function (error) {
+            console.log(error)
+            throw new Error(error)
+          })
+      } else {
+        throw new Error('Missing practioner Id')
       }
-      var config = { token: this.getToken(), data }
-      return client(
-        `https://stage-fhir.insiteflow.com/api/v1/facility/${facilityId}/clients/${clients[0].id}/authorize`,
-        config,
-      )
-        .then(data => {
-          console.log(data, 'PATIENT CONTEXT CALL AUTHORIZE')
-          return data
-        })
-        .catch(function (error) {
-          console.log(error)
-          throw new Error(error)
-        })
     },
     getPractiotionerId() {
       return props.practitionerId

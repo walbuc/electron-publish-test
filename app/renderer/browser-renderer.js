@@ -9,9 +9,8 @@ const refreshButton = document.querySelector('#webview-refresh')
 const backButton = document.querySelector('#webview-back')
 const forwardButton = document.querySelector('#webview-forward')
 
-var patientsStack = []
-
 var count = 1
+const lss = mainProcess.localStorageService
 
 function getActiveWebview() {
   return document.querySelector('.tab-content .active webview')
@@ -53,14 +52,17 @@ async function getPatientContext() {
 
 function removePatientView(patient) {
   removeNodes(patient.mrn)
-  patientsStack = patientsStack.filter(
-    p => p.chartOpenEvent.patient.mrn !== patient.mrn,
-  )
+  const patientsStack = lss
+    .getPatientsStack()
+    .filter(p => p.chartOpenEvent.patient.mrn !== patient.mrn)
   count = patientsStack.length
+  lss.setPatientsStack(patientsStack)
 }
 
 function removeNodes(mrn) {
-  const patient = patientsStack.find(p => p.chartOpenEvent.patient.mrn === mrn)
+  const patient = lss
+    .getPatientsStack()
+    .find(p => p.chartOpenEvent.patient.mrn === mrn)
   patient.btn.remove()
   patient.view.remove()
 }
@@ -78,10 +80,10 @@ function getOldest(patients) {
 function displayPatientView(data, chartOpenEvent) {
   const allData = { ...data, chartOpenEvent, addedTm: Date.now() }
   if (count < 5) {
-    count = patientsStack.push(allData)
+    count = lss.getPatientsStack().push(allData)
     addPatientView(allData)
   } else {
-    const oldest = getOldest(patientsStack)
+    const oldest = getOldest(ls.getPatientsStack())
     const patient = oldest.chartOpenEvent.patient
     removePatientView(patient)
     displayPatientView(data, chartOpenEvent)

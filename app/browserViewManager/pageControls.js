@@ -7,7 +7,7 @@ PageManagerFactory.DisplayHeight = 0
 PageManagerFactory.Badge = null
 PageManagerFactory.Browser = null
 
-function PageManagerFactory() {
+function PageManagerFactory(localStorageService) {
   const BadgeContentWidth = 130
   const BadgeCollapsedContentWidth = 38
   const BadgeContentHeight = 40
@@ -23,7 +23,10 @@ function PageManagerFactory() {
       )
     },
     createBrowser: function () {
-      PageManagerFactory.Browser = BrowserManagerFactory(PageManagerFactory.DisplayWidth, PageManagerFactory.DisplayHeight)
+      PageManagerFactory.Browser = BrowserManagerFactory(
+        PageManagerFactory.DisplayWidth,
+        PageManagerFactory.DisplayHeight,
+      )
     },
     quit: function () {
       if (!PageManagerFactory.Badge || !PageManagerFactory.Browser) {
@@ -31,6 +34,7 @@ function PageManagerFactory() {
       }
       PageManagerFactory.Badge.quit()
       PageManagerFactory.Browser.quit()
+      localStorageService.logout()
     },
   }
 

@@ -28,4 +28,14 @@ function getEventsOptions(integration) {
   }
 }
 
-module.exports = { epicOptions, cernerOptions, getEventsOptions, appEvents }
+const CERNER_INTEGRATION = 'cerner'
+const EPIC_INTEGRATION = 'epic'
+
+module.exports = {
+  epicOptions,
+  cernerOptions,
+  getEventsOptions,
+  appEvents,
+  CERNER_INTEGRATION,
+  EPIC_INTEGRATION,
+}
