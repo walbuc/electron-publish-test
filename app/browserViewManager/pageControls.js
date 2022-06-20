@@ -34,7 +34,7 @@ function PageManagerFactory(localStorageService) {
       }
       PageManagerFactory.Badge.quit()
       PageManagerFactory.Browser.quit()
-      localStorageService.logout()
+      //localStorageService.logout()
     },
   }
 

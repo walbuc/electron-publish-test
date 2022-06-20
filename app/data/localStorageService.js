@@ -1,13 +1,17 @@
 const patientsLocalStorageKey = '__patients_stack__'
 const authLocalStorageKey = '__auth_token__'
 
+// Electron does not provide a api for local storage
+// should use a  store for persisting the data
+
 function LocalStorageFactory() {
+  const props = { patientsStack: [] }
   const localStorageService = {
     getPatientsStack() {
-      return window.localStorage.getItem(patientsLocalStorageKey)
+      return props.patientsStack
     },
-    setPatienStack(patientsStack) {
-      window.localStorage.setItem(patientsLocalStorageKey, patientsStack)
+    setPatientsStack(patientsStack) {
+      props.patientsStack = [...patientsStack]
     },
     async getToken() {
       return window.localStorage.getItem(authLocalStorageKey)

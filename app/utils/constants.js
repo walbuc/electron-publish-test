@@ -2,16 +2,19 @@ const epicOptions = {
   login: 'Login',
   patientOpen: 'PatientOpen',
   patientClose: 'PatientClose',
+  logout: 'Logout',
 }
 
 const cernerOptions = {
   login: 'Login',
   patientOpen: 'chart-open',
   patientClose: 'chart-close',
+  logout: 'logout',
 }
 
 const appEvents = {
   login: 'login',
+  logout: 'logout',
   patientOpen: 'patient-open',
   patientClose: 'patient-close',
 }
@@ -25,6 +28,7 @@ function getEventsOptions(integration) {
     patientClose: isEpic
       ? epicOptions.patientClose
       : cernerOptions.patientClose,
+    logout: isEpic ? epicOptions.logout : cernerOptions.logout,
   }
 }
 

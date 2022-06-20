@@ -54,13 +54,7 @@ function getOptions() {
   return { facilityId, facilitySecret, ecPath, ecKey, ecAlgorithm, integration }
 }
 
-// integration required
-// if epic => validate path, algotithm optonal
-// Client ID: required
-// Client secret: required
 //private static string[] ValidEventFileEncryptionTypeOptions = new string[] { "AES-128", "AES-256" };
-
-// to do re implement validation
 
 function validateIntegration(options) {
   const { integration } = options
@@ -75,10 +69,10 @@ function validateIntegration(options) {
 
 function validatePath(options) {
   const { ecPath, isEpicIntegrationEnabled } = options
-  if (isEpicIntegrationEnabled && ecPath) {
-    return Object.assign({}, options, {})
+  if (isEpicIntegrationEnabled() && !ecPath) {
+    throw new Error('ec-path is required.')
   }
-  throw new Error('ec-path is required.')
+  return Object.assign({}, options, {})
 }
 
 const isEpicIntegrationEnabled = option => o => {
@@ -93,16 +87,23 @@ const isCernerIntegrationEnabled = option => o => {
   })
 }
 
-const required = () => () => {}
+const required = key => options => {
+  if (options[key]) {
+    return Object.assign({}, options, {})
+  }
+  throw new Error(`${key} is required`)
+}
 
 const validateInput = pipe(
   validateIntegration,
   isCernerIntegrationEnabled(CERNER_INTEGRATION),
   isEpicIntegrationEnabled(EPIC_INTEGRATION),
   validatePath,
-)(getOptions())
+  required('facilityId'),
+  required('facilitySecret'),
+)
 
-const options = validateInput()
+const options = validateInput(getOptions())
 
 const eventsOptions = getEventsOptions(options.integration)
 const localStorage = LocalStorageFactory()
@@ -156,6 +157,17 @@ const getProviderContext = (function () {
     return data
   }
 })()
+
+notificationService.on('logout', async data => {
+  await baseHealthService.revoke()
+  if (PageManagerFactory.Browser) {
+    PageManagerFactory.Browser.quit()
+  }
+})
+
+notificationService.on('PatientClose', async data => {
+  await baseHealthService.revoke(data)
+})
 
 module.exports = {
   pageManager,

@@ -10,7 +10,10 @@ const backButton = document.querySelector('#webview-back')
 const forwardButton = document.querySelector('#webview-forward')
 
 var count = 1
-const lss = mainProcess.localStorageService
+//const lss = mainProcess.localStorage
+
+// to do replace with some data store
+const lss = LocalStorageFactory()
 
 function getActiveWebview() {
   return document.querySelector('.tab-content .active webview')
@@ -39,12 +42,14 @@ forwardButton.addEventListener('click', e => {
 
 async function getPatientContext() {
   mainProcess.notificationService.on('PatientOpen', async data => {
+    console.log(data, 'Chart Open event data')
     const patientData =
       await mainProcess.baseHealthService.fetchPatientContextUrl(data)
     displayPatientView(patientData, data)
   })
 
   mainProcess.notificationService.on('PatientClose', data => {
+    console.log(data, 'patient close')
     const { patient } = data
     removePatientView(patient)
   })
@@ -78,12 +83,19 @@ function getOldest(patients) {
 }
 
 function displayPatientView(data, chartOpenEvent) {
-  const allData = { ...data, chartOpenEvent, addedTm: Date.now() }
+  const allData = {
+    ...data,
+    chartOpenEvent: { ...chartOpenEvent },
+    addedTm: Date.now(),
+  }
   if (count < 5) {
-    count = lss.getPatientsStack().push(allData)
-    addPatientView(allData)
+    const newPatient = addPatientView({ ...allData })
+    console.log(newPatient, 'newPatient')
+    const patiensStack = [...lss.getPatientsStack(), { ...newPatient }]
+    count = patiensStack.length
+    lss.setPatientsStack(patiensStack)
   } else {
-    const oldest = getOldest(ls.getPatientsStack())
+    const oldest = getOldest(lss.getPatientsStack())
     const patient = oldest.chartOpenEvent.patient
     removePatientView(patient)
     displayPatientView(data, chartOpenEvent)
@@ -91,6 +103,7 @@ function displayPatientView(data, chartOpenEvent) {
 }
 
 function createButton({ chartOpenEvent = {} }) {
+  console.log('Create button', chartOpenEvent)
   var btn = document.createElement('button')
   btn.innerText = `${chartOpenEvent.patient.firstname} ${chartOpenEvent.patient.lastname}`
   btn.classList.add('nav-link')
@@ -105,6 +118,7 @@ function createButton({ chartOpenEvent = {} }) {
 }
 
 function createWebView({ baseUrl, chartOpenEvent = {} }) {
+  console.log('Create button', baseUrl, chartOpenEvent)
   const parent = document.createElement('div')
   parent.classList.add('tab-pane', 'fade')
   parent.id = `patient-${chartOpenEvent.patient.mrn}`
@@ -126,14 +140,27 @@ function addPatientView(patient) {
   const view = createWebView(patient)
   navigationBar.appendChild(btn)
   navigationTabContent.appendChild(view)
-  patient.btn = btn
-  patient.view = view
+  return { ...patient, btn, view }
 }
 
 function init() {
   mainProcess.getProviderContext().then(data => {
     browserView.src = data.baseUrl
-    getPatientContext()
   })
+  getPatientContext()
 }
 init()
+
+// Having this in memory for now.
+function LocalStorageFactory() {
+  const props = { patientsStack: [] }
+  const localStorageService = {
+    getPatientsStack() {
+      return props.patientsStack
+    },
+    setPatientsStack(patientsStack) {
+      props.patientsStack = [...patientsStack]
+    },
+  }
+  return localStorageService
+}

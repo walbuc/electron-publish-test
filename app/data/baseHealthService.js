@@ -103,6 +103,35 @@ function BaseHealthServiceFactory(
         throw new Error('Missing practioner Id')
       }
     },
+    revoke({ patient } = {}) {
+      const practitionerId = this.getPractiotionerId()
+      if (practitionerId) {
+        const clients = this.getFacilityClients()
+        var data = {
+          practitionerId: this.getPractiotionerId(),
+        }
+        if (patient) {
+          data = { ...data, patientId: patient.mrn }
+        }
+
+        var config = { token: this.getToken(), data }
+        return client(
+          `https://stage-fhir.insiteflow.com/api/v1/facility/${facilityId}/clients/${clients[0].id}/revoke`,
+          config,
+        )
+          .then(data => {
+            console.log(data, 'REVOKE CONTEXT CALL')
+            return data
+          })
+          .catch(function (error) {
+            console.log(error)
+            throw new Error(error)
+          })
+      } else {
+        throw new Error('Missing practioner Id')
+      }
+    },
+
     getPractiotionerId() {
       return props.practitionerId
     },
