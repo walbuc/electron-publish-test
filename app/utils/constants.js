@@ -34,6 +34,8 @@ function getEventsOptions(integration) {
 
 const CERNER_INTEGRATION = 'cerner'
 const EPIC_INTEGRATION = 'epic'
+const AES_128 = 'AES-128'
+const AES_256 = 'AES-256'
 
 module.exports = {
   epicOptions,
@@ -42,4 +44,6 @@ module.exports = {
   appEvents,
   CERNER_INTEGRATION,
   EPIC_INTEGRATION,
+  AES_128,
+  AES_256,
 }
