@@ -1,7 +1,7 @@
 const remote = require('@electron/remote/main')
 const pipe = require('lodash/fp/flow')
 remote.initialize()
-const { app } = require('electron')
+const { app, ipcMain } = require('electron')
 const { PageManagerFactory } = require('./browserViewManager/pageControls')
 const args = require('minimist')(process.argv.slice(2))
 const console = require('console')
@@ -15,8 +15,10 @@ const {
   getEventsOptions,
   CERNER_INTEGRATION,
   EPIC_INTEGRATION,
+  AES_128,
+  AES_256,
 } = require('./utils/constants')
-const { LocalStorageFactory } = require('./data/localStorageService')
+//const { LocalStorageFactory } = require('./data/localStorageService')
 
 app.commandLine.appendSwitch('remote-debugging-port', '9222')
 app.console = new console.Console(process.stdout, process.stderr)
@@ -43,6 +45,24 @@ app.console = new console.Console(process.stdout, process.stderr)
 
 // Scope: facility-api
 
+// Having this in memory for now.
+function LocalStorageFactory() {
+  const props = { patientsStack: [] }
+
+  const localStorageService = {
+    getPatientsStack() {
+      return [...props.patientsStack]
+    },
+    setPatientsStack(patientsStack) {
+      props.patientsStack = [...patientsStack]
+      return [...props.patientsStack]
+    },
+  }
+  return localStorageService
+}
+
+const lss = LocalStorageFactory()
+
 function getOptions() {
   const facilityId = args['if-facility-id']
   const facilitySecret = args['if-facility-secret']
@@ -55,6 +75,17 @@ function getOptions() {
 }
 
 //private static string[] ValidEventFileEncryptionTypeOptions = new string[] { "AES-128", "AES-256" };
+
+function validateAlgorithm(options) {
+  const { ecAlgorithm } = options
+  const validOptions = [AES_128, AES_256]
+
+  const valid = validOptions.includes(ecAlgorithm)
+  if (valid) {
+    return Object.assign({}, options)
+  }
+  throw new Error('Supported ecAlgorithm options are' + validOptions.join(', '))
+}
 
 function validateIntegration(options) {
   const { integration } = options
@@ -99,6 +130,7 @@ const validateInput = pipe(
   isCernerIntegrationEnabled(CERNER_INTEGRATION),
   isEpicIntegrationEnabled(EPIC_INTEGRATION),
   validatePath,
+  validateAlgorithm,
   required('facilityId'),
   required('facilitySecret'),
 )
@@ -106,8 +138,7 @@ const validateInput = pipe(
 const options = validateInput(getOptions())
 
 const eventsOptions = getEventsOptions(options.integration)
-const localStorage = LocalStorageFactory()
-const pageManager = PageManagerFactory(localStorage)
+const pageManager = PageManagerFactory()
 const notificationService = NotificationServiceFactory()
 
 AccountServiceFactory(options, notificationService, eventsOptions)
@@ -126,7 +157,7 @@ app.whenReady().then(() => {
     // should init Badge.window
     pageManager.createBadge()
     pageManager.createBrowser()
-    // After Badge init i hsould get a Login event from not service
+    // After Badge init i should get a Login event from not service
     // and use practitioner id
     notificationService.on('login', () => {
       PageManagerFactory.Badge.window.loadFile(`${__dirname}/html/badge.html`)
@@ -134,6 +165,9 @@ app.whenReady().then(() => {
     })
 
     longPollingService.start()
+
+    ipcMain.on('lss:getPatientsStack', handlegetPatientsStack)
+    ipcMain.on('lss:setPatientsStack', handlesetPatientsStack)
   })
 
   const { screen } = require('electron')
@@ -141,6 +175,15 @@ app.whenReady().then(() => {
   PageManagerFactory.DisplayHeight = primaryDisplay.size.height
   PageManagerFactory.DisplayWidth = primaryDisplay.size.width
 })
+
+function handlegetPatientsStack(event, args) {
+  event.returnValue = lss.getPatientsStack()
+}
+
+const handlesetPatientsStack = (event, ps) => {
+  console.log(ps, 'Setting patient stack')
+  event.returnValue = lss.setPatientsStack(ps)
+}
 
 function showBrowser() {
   PageManagerFactory.Browser.show(`${__dirname}/html/browser.html`)
@@ -169,6 +212,37 @@ notificationService.on('PatientClose', async data => {
   await baseHealthService.revoke(data)
 })
 
+notificationService.on('PatientOpen', async data => {
+  const patientContextData = await baseHealthService.fetchPatientContextUrl(
+    data,
+  )
+  const patientData = {
+    ...patientContextData,
+    chartOpenEvent: { ...data },
+    addedTm: Date.now(),
+  }
+  if (PageManagerFactory.Browser.isDisplayed) {
+    PageManagerFactory.Browser.window.webContents.send(
+      'PatientOpen',
+      patientData,
+    )
+  } else {
+    lss.setPatientsStack([...lss.getPatientsStack(), patientData])
+  }
+})
+
+notificationService.on('PatientClose', data => {
+  if (PageManagerFactory.Browser.isDisplayed) {
+    PageManagerFactory.Browser.window.webContents.send('PatientClose', data)
+  } else {
+    const { patient } = data
+    const ps = lss
+      .getPatientsStack()
+      .filter(p => p.chartOpenEvent.patient.mrn !== patient.mrn)
+    lss.setPatientsStack(ps)
+  }
+})
+
 module.exports = {
   pageManager,
   PageManagerFactory,
@@ -176,5 +250,4 @@ module.exports = {
   getProviderContext,
   notificationService,
   baseHealthService,
-  localStorage,
 }

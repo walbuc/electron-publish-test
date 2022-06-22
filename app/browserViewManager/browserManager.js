@@ -1,4 +1,5 @@
 const { BrowserWindow } = require('electron')
+const path = require('path')
 
 function BrowserManagerFactory(DisplayWidth, DisplayHeight) {
   var window = null
@@ -30,6 +31,7 @@ function BrowserManagerFactory(DisplayWidth, DisplayHeight) {
   window = browser
   const BrowserManager = {
     window,
+    isDisplayed: false,
     show: function (url) {
       this.window.loadFile(url)
       this.window.setBounds({
@@ -37,6 +39,7 @@ function BrowserManagerFactory(DisplayWidth, DisplayHeight) {
         y: DisplayHeight - WindowHeight - 50,
       })
       this.window.show()
+      this.isDisplayed = true
     },
     close: function () {
       this.window.hide()

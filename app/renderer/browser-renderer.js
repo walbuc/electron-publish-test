@@ -1,4 +1,5 @@
 const remote = require('@electron/remote')
+const { ipcRenderer } = require('electron')
 const mainProcess = remote.require('./main')
 const app = remote.app
 const currentWindow = remote.getCurrentWindow()
@@ -10,10 +11,6 @@ const backButton = document.querySelector('#webview-back')
 const forwardButton = document.querySelector('#webview-forward')
 
 var count = 1
-//const lss = mainProcess.localStorage
-
-// to do replace with some data store
-const lss = LocalStorageFactory()
 
 function getActiveWebview() {
   return document.querySelector('.tab-content .active webview')
@@ -40,34 +37,36 @@ forwardButton.addEventListener('click', e => {
   }
 })
 
-async function getPatientContext() {
-  mainProcess.notificationService.on('PatientOpen', async data => {
-    const patientData =
-      await mainProcess.baseHealthService.fetchPatientContextUrl(data)
-    displayPatientView(patientData, data)
-  })
+ipcRenderer.on('PatientOpen', patientOpen)
+ipcRenderer.on('PatientClose', patientClose)
 
-  mainProcess.notificationService.on('PatientClose', data => {
-    const { patient } = data
-    removePatientView(patient)
-  })
+function patientClose(event, data) {
+  const { patient } = data
+  removePatientView(patient)
+}
+
+async function patientOpen(event, data) {
+  displayPatientView(data)
 }
 
 function removePatientView(patient) {
   removeNodes(patient.mrn)
-  const patientsStack = lss
-    .getPatientsStack()
+  const patientsStack = ipcRenderer
+    .sendSync('lss:getPatientsStack')
     .filter(p => p.chartOpenEvent.patient.mrn !== patient.mrn)
   count = patientsStack.length
-  lss.setPatientsStack(patientsStack)
+  ipcRenderer.sendSync('lss:setPatientsStack', patientsStack)
 }
 
 function removeNodes(mrn) {
-  const patient = lss
-    .getPatientsStack()
+  const patient = ipcRenderer
+    .sendSync('lss:getPatientsStack')
     .find(p => p.chartOpenEvent.patient.mrn === mrn)
-  patient.btn.remove()
-  patient.view.remove()
+
+  const btn = document.querySelector(`#${patient.btn}`)
+  const view = document.querySelector(`#${patient.view}`)
+  btn.remove()
+  view.remove()
 }
 
 function getOldest(patients) {
@@ -80,22 +79,21 @@ function getOldest(patients) {
   return oldest
 }
 
-function displayPatientView(data, chartOpenEvent) {
-  const allData = {
-    ...data,
-    chartOpenEvent: { ...chartOpenEvent },
-    addedTm: Date.now(),
-  }
+function displayPatientView(patientData) {
   if (count < 5) {
-    const newPatient = addPatientView({ ...allData })
-    const patiensStack = [...lss.getPatientsStack(), { ...newPatient }]
+    const newPatient = addPatientView({ ...patientData })
+    const patiensStack = [
+      ...ipcRenderer.sendSync('lss:getPatientsStack'),
+      { ...newPatient },
+    ]
     count = patiensStack.length
-    lss.setPatientsStack(patiensStack)
+    ipcRenderer.sendSync('lss:setPatientsStack', [...patiensStack])
   } else {
-    const oldest = getOldest(lss.getPatientsStack())
+    const oldest = getOldest(ipcRenderer.sendSync('lss:getPatientsStack'))
     const patient = oldest.chartOpenEvent.patient
+
     removePatientView(patient)
-    displayPatientView(data, chartOpenEvent)
+    displayPatientView(patientData)
   }
 }
 
@@ -103,13 +101,14 @@ function createButton({ chartOpenEvent = {} }) {
   var btn = document.createElement('button')
   btn.innerText = `${chartOpenEvent.patient.firstname} ${chartOpenEvent.patient.lastname}`
   btn.classList.add('nav-link')
-  btn.id = 'patient-1-tab'
+  btn.id = `patient-${chartOpenEvent.patient.mrn}-tab`
   btn.setAttribute('data-bs-toggle', 'tab')
   btn.setAttribute('data-bs-target', `#patient-${chartOpenEvent.patient.mrn}`)
   btn.type = 'button'
   btn.setAttribute('role', 'tab')
   btn.setAttribute('aria-controls', 'nav-profile')
   btn.setAttribute('aria-selected', 'false')
+
   return btn
 }
 
@@ -127,6 +126,7 @@ function createWebView({ baseUrl, chartOpenEvent = {} }) {
   child.src = baseUrl
 
   parent.appendChild(child)
+
   return parent
 }
 
@@ -135,27 +135,19 @@ function addPatientView(patient) {
   const view = createWebView(patient)
   navigationBar.appendChild(btn)
   navigationTabContent.appendChild(view)
-  return { ...patient, btn, view }
+  const newPatient = { ...patient, btn: btn.id, view: view.id }
+  return newPatient
 }
 
 function init() {
   mainProcess.getProviderContext().then(data => {
     browserView.src = data.baseUrl
   })
-  getPatientContext()
+  loadPatients()
 }
 init()
 
-// Having this in memory for now.
-function LocalStorageFactory() {
-  const props = { patientsStack: [] }
-  const localStorageService = {
-    getPatientsStack() {
-      return props.patientsStack
-    },
-    setPatientsStack(patientsStack) {
-      props.patientsStack = [...patientsStack]
-    },
-  }
-  return localStorageService
+function loadPatients() {
+  const patients = ipcRenderer.sendSync('lss:getPatientsStack')
+  patients.forEach(p => addPatientView(p))
 }
