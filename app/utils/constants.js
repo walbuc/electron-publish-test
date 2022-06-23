@@ -37,6 +37,10 @@ const EPIC_INTEGRATION = 'epic'
 const AES_128 = 'AES-128'
 const AES_256 = 'AES-256'
 
+function isNotMac() {
+  return process.platform !== 'darwin'
+}
+
 module.exports = {
   epicOptions,
   cernerOptions,
@@ -46,4 +50,5 @@ module.exports = {
   EPIC_INTEGRATION,
   AES_128,
   AES_256,
+  isNotMac,
 }

@@ -6,8 +6,7 @@ async function client(
   { data, token, headers: customHeaders, ...customConfig } = {},
 ) {
   const config = {
-    //url: `${apiURL}/${endpoint}`,
-    url: endpoint,
+    url: `${apiURL}/${endpoint}`,
     method: data ? 'POST' : 'GET',
     headers: {
       Authorization: token ? `Bearer ${token}` : '',

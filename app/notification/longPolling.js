@@ -91,12 +91,8 @@ function longPollingFactory(
       console.log('requesting...')
       var data = {}
       var config = { token, data, timeout: 50000 }
-
-      // hardcoded
-      configOptions.deviceId = 'WALTER-DESKTOP'
-
       await client(
-        `https://stage-fhir.insiteflow.com/api/v1/facility/${configOptions.facilityId}/${configOptions.deviceId}/listen`,
+        `facility/${configOptions.facilityId}/${configOptions.deviceId}/listen`,
         config,
       )
         .then(data => {
@@ -107,9 +103,6 @@ function longPollingFactory(
             hadErr = true
             throw new Error(error)
           }
-          // else {
-          //   throw new Error(error)
-          // }
         })
 
       if (hadErr) {

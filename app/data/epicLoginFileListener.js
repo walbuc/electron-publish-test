@@ -43,12 +43,6 @@ function EpicLoginFileListener(
       })
     },
     handleNotification(raw, type) {
-      // var msg = notificationMessage()
-      // var notifications = []
-      // notifications.push(
-      //   notification({ type, patient: this.parsePatient(raw) }),
-      // )
-      // msg.message = JSON.stringify(notifications)
       var msg = notificationMessage()
       switch (type) {
         case eventsOptions.login:
@@ -60,6 +54,19 @@ function EpicLoginFileListener(
           }
           msg.message = notification({ type, practitionerId: user.username })
           notificationService.publish('login', JSON.stringify(msg))
+          break
+        case eventsOptions.logout:
+          var dataLogout = this.parseXML(raw)
+          // check
+          if (dataLogout.AuthenticationData) {
+            var userLogout = this.parseAuthData(dataLogout.AuthenticationData)
+            this.listenerLoginInfoProvided(userLogout)
+          }
+          msg.message = notification({
+            type,
+            practitionerId: userLogout.username,
+          })
+          notificationService.publish('logout', JSON.stringify(msg))
           break
         case eventsOptions.patientOpen:
           msg.message = notification({ type, patient: this.parsePatient(raw) })

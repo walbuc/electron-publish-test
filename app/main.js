@@ -17,51 +17,15 @@ const {
   EPIC_INTEGRATION,
   AES_128,
   AES_256,
+  isNotMac,
 } = require('./utils/constants')
-//const { LocalStorageFactory } = require('./data/localStorageService')
+const { LevelFactory } = require('./data/levelService')
+var os = require('os')
 
 app.commandLine.appendSwitch('remote-debugging-port', '9222')
 app.console = new console.Console(process.stdout, process.stderr)
 
-// --if-facility-id – The facility ID used for both authentication and API operations (Required)
-
-// --if-facility-secret – The facility secret used to authenticate to the Insiteflow backend via OAuth (Required)
-
-// --ec-path – The path to the directory to find the Epic XML context files
-
-// --ec-key– The encryption key used with the Epic XML context files
-
-// --ec-algorithm – The encryption algorithm used for encrypting the Epic XML context files (Defaults to AES128)
-
-// OAuth credentials:
-// Grant Type: Client Credentials
-// Token URL: https://stage-fhir.insiteflow.com/connect/token
-
-// --if-facility-id
-// Client ID: 655c5db4-6e79-11ec-b6af-068e8d6b9d64
-
-// --if-facility-secret
-// Client Secret: DOMIMdHdLk57RT66C3kX
-
-// Scope: facility-api
-
-// Having this in memory for now.
-function LocalStorageFactory() {
-  const props = { patientsStack: [] }
-
-  const localStorageService = {
-    getPatientsStack() {
-      return [...props.patientsStack]
-    },
-    setPatientsStack(patientsStack) {
-      props.patientsStack = [...patientsStack]
-      return [...props.patientsStack]
-    },
-  }
-  return localStorageService
-}
-
-const lss = LocalStorageFactory()
+const ls = LevelFactory('database')
 
 function getOptions() {
   const facilityId = args['if-facility-id']
@@ -74,7 +38,7 @@ function getOptions() {
   return { facilityId, facilitySecret, ecPath, ecKey, ecAlgorithm, integration }
 }
 
-//private static string[] ValidEventFileEncryptionTypeOptions = new string[] { "AES-128", "AES-256" };
+function validateEncriptionKey(options) {}
 
 function validateAlgorithm(options) {
   const { ecAlgorithm } = options
@@ -125,6 +89,13 @@ const required = key => options => {
   throw new Error(`${key} is required`)
 }
 
+const getDeviceId = isNotMac => options => {
+  if (isNotMac()) {
+    return Object.assign({}, options, { deviceId: process.env.COMPUTERNAME })
+  }
+  return Object.assign({}, options, { deviceId: os.hostname() })
+}
+
 const validateInput = pipe(
   validateIntegration,
   isCernerIntegrationEnabled(CERNER_INTEGRATION),
@@ -133,6 +104,7 @@ const validateInput = pipe(
   validateAlgorithm,
   required('facilityId'),
   required('facilitySecret'),
+  getDeviceId(isNotMac),
 )
 
 const options = validateInput(getOptions())
@@ -151,8 +123,8 @@ const longPollingService = longPollingFactory(
 )
 
 app.whenReady().then(() => {
-  baseHealthService.connect().then(() => {
-    baseHealthService.fetchFacilityClients()
+  baseHealthService.connect().then(async () => {
+    await baseHealthService.fetchFacilityClients()
     // after getting the client I get icon and more info
     // should init Badge.window
     pageManager.createBadge()
@@ -163,7 +135,6 @@ app.whenReady().then(() => {
       PageManagerFactory.Badge.window.loadFile(`${__dirname}/html/badge.html`)
       remote.enable(PageManagerFactory.Badge.window.webContents)
     })
-
     longPollingService.start()
 
     ipcMain.on('lss:getPatientsStack', handlegetPatientsStack)
@@ -176,13 +147,12 @@ app.whenReady().then(() => {
   PageManagerFactory.DisplayWidth = primaryDisplay.size.width
 })
 
-function handlegetPatientsStack(event, args) {
-  event.returnValue = lss.getPatientsStack()
+async function handlegetPatientsStack(event, args) {
+  event.returnValue = await ls.getPatientsStack()
 }
 
-const handlesetPatientsStack = (event, ps) => {
-  console.log(ps, 'Setting patient stack')
-  event.returnValue = lss.setPatientsStack(ps)
+async function handlesetPatientsStack(event, ps) {
+  event.returnValue = await ls.setPatientsStack(ps)
 }
 
 function showBrowser() {
@@ -201,7 +171,7 @@ const getProviderContext = (function () {
   }
 })()
 
-notificationService.on('logout', async data => {
+notificationService.on('logout', async () => {
   await baseHealthService.revoke()
   if (PageManagerFactory.Browser) {
     PageManagerFactory.Browser.quit()
@@ -227,7 +197,7 @@ notificationService.on('PatientOpen', async data => {
       patientData,
     )
   } else {
-    lss.setPatientsStack([...lss.getPatientsStack(), patientData])
+    ls.setPatientsStack([...ls.getPatientsStack(), patientData])
   }
 })
 
@@ -236,11 +206,16 @@ notificationService.on('PatientClose', data => {
     PageManagerFactory.Browser.window.webContents.send('PatientClose', data)
   } else {
     const { patient } = data
-    const ps = lss
+    const ps = ls
       .getPatientsStack()
       .filter(p => p.chartOpenEvent.patient.mrn !== patient.mrn)
-    lss.setPatientsStack(ps)
+    ls.setPatientsStack(ps)
   }
+})
+
+app.on('window-all-closed', async () => {
+  app.quit()
+  await ls.logout()
 })
 
 module.exports = {
