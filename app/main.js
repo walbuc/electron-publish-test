@@ -133,6 +133,7 @@ app.whenReady().then(() => {
     // and use practitioner id
     notificationService.on('login', () => {
       PageManagerFactory.Badge.window.loadFile(`${__dirname}/html/badge.html`)
+      PageManagerFactory.Badge.open()
       remote.enable(PageManagerFactory.Badge.window.webContents)
     })
     longPollingService.start()
@@ -173,8 +174,12 @@ const getProviderContext = (function () {
 
 notificationService.on('logout', async () => {
   await baseHealthService.revoke()
+  console.log("Processing logout in notification service...")
   if (PageManagerFactory.Browser) {
-    PageManagerFactory.Browser.quit()
+    console.log("Hiding browser and badge...")
+    PageManagerFactory.Browser.close()
+    PageManagerFactory.Badge.close()
+    ls.setPatientsStack([])
   }
 })
 
@@ -183,6 +188,17 @@ notificationService.on('PatientClose', async data => {
 })
 
 notificationService.on('PatientOpen', async data => {
+  //Check if patient already exists
+  const existingPatients = await ls.getPatientsStack()
+  console.log("Checking for patient with MRN: " + data.patient.mrn)
+  console.log(existingPatients)
+
+  if (existingPatients && existingPatients.length > 0
+    &&  existingPatients.find(patientContext => patientContext.patient.mrn === data.patient.mrn)) {
+    console.log("Patient with MRN: " + data.patient.mrn + " already exists")
+    return;
+  }
+
   const patientContextData = await baseHealthService.fetchPatientContextUrl(
     data,
   )
@@ -197,14 +213,17 @@ notificationService.on('PatientOpen', async data => {
       patientData,
     )
   } else {
-    ls.setPatientsStack([...ls.getPatientsStack(), patientData])
+    ls.setPatientsStack([...existingPatients, patientData])
   }
 })
 
 notificationService.on('PatientClose', data => {
+  console.log("Closing patient with MRN: " + data.patient.mrn)
   if (PageManagerFactory.Browser.isDisplayed) {
+    console.log("Removing patient via browser change")
     PageManagerFactory.Browser.window.webContents.send('PatientClose', data)
   } else {
+    console.log("Removing patient tab in stack...")
     const { patient } = data
     const ps = ls
       .getPatientsStack()

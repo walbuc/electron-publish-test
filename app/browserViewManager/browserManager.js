@@ -10,6 +10,7 @@ function BrowserManagerFactory(DisplayWidth, DisplayHeight) {
     focusable: true,
     alwaysOnTop: true,
     skipTaskbar: false,
+    minimizable: false,
     width: WindowWidth,
     height: WindowHeight,
     title: 'Health Gorilla',
