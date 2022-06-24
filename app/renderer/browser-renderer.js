@@ -82,12 +82,13 @@ function getOldest(patients) {
 function displayPatientView(patientData) {
   if (count < 5) {
     const newPatient = addPatientView({ ...patientData })
-    const patiensStack = [
+
+    const patientsStack = [
       ...ipcRenderer.sendSync('lss:getPatientsStack'),
       { ...newPatient },
     ]
-    count = patiensStack.length
-    ipcRenderer.sendSync('lss:setPatientsStack', [...patiensStack])
+    count = patientsStack.length
+    ipcRenderer.sendSync('lss:setPatientsStack', [...patientsStack])
   } else {
     const oldest = getOldest(ipcRenderer.sendSync('lss:getPatientsStack'))
     const patient = oldest.chartOpenEvent.patient
