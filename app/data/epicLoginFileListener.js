@@ -43,12 +43,6 @@ function EpicLoginFileListener(
       })
     },
     handleNotification(raw, type) {
-      // var msg = notificationMessage()
-      // var notifications = []
-      // notifications.push(
-      //   notification({ type, patient: this.parsePatient(raw) }),
-      // )
-      // msg.message = JSON.stringify(notifications)
       var msg = notificationMessage()
       switch (type) {
         case eventsOptions.login:
@@ -61,15 +55,44 @@ function EpicLoginFileListener(
           msg.message = notification({ type, practitionerId: user.username })
           notificationService.publish('login', JSON.stringify(msg))
           break
+        case eventsOptions.logout:
+          var dataLogout = this.parseXML(raw)
+          // check
+          var username
+          if (dataLogout.CurrentUser) {
+            username = dataLogout.CurrentUser
+          }
+          console.log(this.listenerLoginInfoProvided.user)
+          console.log("Processing logout for current user: " + username)
+
+          if (username) {
+            this.listenerLoginInfoProvided({})
+            msg.message = notification({
+              type,
+              practitionerId: username
+            })
+            notificationService.publish('logout', JSON.stringify(msg))
+          }
+          break
         case eventsOptions.patientOpen:
           msg.message = notification({ type, patient: this.parsePatient(raw) })
           notificationService.publish('PatientOpen', JSON.stringify(msg))
+          break
+        case eventsOptions.patientSwitch:
+          console.log("Doing patient switch...")
+          var patient = this.parsePatient(raw)
+          if (patient.mrn) {
+            console.log("Patient switch with MRN: " + patient.mrn + " and name: " + patient.lastname)
+            msg.message = notification({ type: eventsOptions.patientOpen, patient })
+            notificationService.publish('PatientOpen', JSON.stringify(msg))
+          }
           break
         case eventsOptions.patientClose:
           msg.message = notification({ type, patient: this.parsePatient(raw) })
           notificationService.publish('PatientClose', JSON.stringify(msg))
           break
         default:
+          console.log("Unhandled event type: " + type)
           break
       }
     },
@@ -80,7 +103,8 @@ function EpicLoginFileListener(
       var root = xml['EpicStudyData']
 
       var eventVal = root['Event']['_text']
-      if (eventVal == 'PatientOpen') {
+      if (eventVal == 'PatientOpen' || eventVal == 'PatientClose'
+        || (eventVal == 'PatientSwitch' && root['PatientID'])) {
         result.mrn = root['PatientID']['_text']
         result.dob = root['PatientBirthDate']['_text']
         var nameParts = root['PatientName']['_text'].split(',')
@@ -96,12 +120,21 @@ function EpicLoginFileListener(
 
       var eventVal = root['Event']['_text']
       if (eventVal === 'Login' || eventVal === 'Logout') {
-        var authData = root['AuthenticationData']['_text']
-        var authInfo = root['AuthInfo']['_text']
+        var authData, authInfo, currentUser
+        if (root['AuthenticationData']) {
+          authData = root['AuthenticationData']['_text']
+        }
+        if (root['AuthInfo']) {
+          authInfo = root['AuthInfo']['_text']
+        }
+        if (root['CurrentUser']) {
+          currentUser = root['CurrentUser']['UserID']
+        }
         return {
           Event: eventVal,
           AuthenticationData: authData,
           AuthInfo: authInfo,
+          CurrentUser: currentUser
         }
       }
       return { Event: eventVal, AuthenticationData: '', AuthInfo: '' }

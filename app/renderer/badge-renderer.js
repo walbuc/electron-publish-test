@@ -41,6 +41,7 @@ badgeView.addEventListener('mouseleave', e => {
 })
 
 badgeView.addEventListener('click', e => {
+  badgeHoverLeave()
   ToggleBrowser(e)
 })
 

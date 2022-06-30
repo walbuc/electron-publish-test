@@ -71,6 +71,14 @@ function BadgeManagerFactory(
     quit: function () {
       this.window.close()
     },
+    close: function() {
+      this.window.hide()
+    },
+    open: function() {
+      this.window.show()
+    }
+
+
   }
 
   return BadgeManager
