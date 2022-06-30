@@ -1,7 +1,12 @@
 const { EpicAccountService } = require('./epicAccountService')
 const { EpicLoginFileListener } = require('./epicLoginFileListener')
 
-function AccountServiceFactory(options, notificationService, eventOptions) {
+function AccountServiceFactory(
+  options,
+  notificationService,
+  eventOptions,
+  baseHealthService,
+) {
   switch (options.integration) {
     case 'epic':
       return EpicAccountService(
@@ -12,6 +17,7 @@ function AccountServiceFactory(options, notificationService, eventOptions) {
           options.EventFileEncryptionUsesIV,
           notificationService,
           eventOptions,
+          baseHealthService,
         ),
       )
     case 'cerner':

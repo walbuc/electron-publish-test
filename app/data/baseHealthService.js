@@ -126,6 +126,14 @@ function BaseHealthServiceFactory(
     getFacilityClients: function () {
       return props.clients
     },
+    getCurrentClient: function () {
+      const clients = this.getFacilityClients()
+      return clients[0]
+    },
+    getClientPatientContext: function () {
+      const client = this.getCurrentClient()
+      return client.patientContext
+    },
   }
 
   return BaseHealthService

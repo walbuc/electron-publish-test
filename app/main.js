@@ -38,7 +38,12 @@ function getOptions() {
   return { facilityId, facilitySecret, ecPath, ecKey, ecAlgorithm, integration }
 }
 
-function validateEncriptionKey(options) {}
+function validateEncriptionKey(options) {
+  if (options.isEpicIntegrationEnabled() && !options.ecKey) {
+    throw new Error('ec-key is required.')
+  }
+  return Object.assign({}, options, {})
+}
 
 function validateAlgorithm(options) {
   const { ecAlgorithm } = options
@@ -104,22 +109,27 @@ const validateInput = pipe(
   validateAlgorithm,
   required('facilityId'),
   required('facilitySecret'),
+  validateEncriptionKey,
   getDeviceId(isNotMac),
 )
 
 const options = validateInput(getOptions())
-
 const eventsOptions = getEventsOptions(options.integration)
 const pageManager = PageManagerFactory()
 const notificationService = NotificationServiceFactory()
 
-AccountServiceFactory(options, notificationService, eventsOptions)
 const baseHealthService = BaseHealthServiceFactory(options, notificationService)
 const longPollingService = longPollingFactory(
   options,
   notificationService,
   baseHealthService,
   eventsOptions,
+)
+AccountServiceFactory(
+  options,
+  notificationService,
+  eventsOptions,
+  baseHealthService,
 )
 
 app.whenReady().then(() => {
@@ -131,12 +141,12 @@ app.whenReady().then(() => {
     pageManager.createBrowser()
     // After Badge init i should get a Login event from not service
     // and use practitioner id
+    longPollingService.start()
     notificationService.on('login', () => {
       PageManagerFactory.Badge.window.loadFile(`${__dirname}/html/badge.html`)
       PageManagerFactory.Badge.open()
       remote.enable(PageManagerFactory.Badge.window.webContents)
     })
-    longPollingService.start()
 
     ipcMain.on('lss:getPatientsStack', handlegetPatientsStack)
     ipcMain.on('lss:setPatientsStack', handlesetPatientsStack)
@@ -174,9 +184,9 @@ const getProviderContext = (function () {
 
 notificationService.on('logout', async () => {
   await baseHealthService.revoke()
-  console.log("Processing logout in notification service...")
+  console.log('Processing logout in notification service...')
   if (PageManagerFactory.Browser) {
-    console.log("Hiding browser and badge...")
+    console.log('Hiding browser and badge...')
     PageManagerFactory.Browser.close()
     PageManagerFactory.Badge.close()
     ls.setPatientsStack([])
@@ -190,13 +200,18 @@ notificationService.on('PatientClose', async data => {
 notificationService.on('PatientOpen', async data => {
   //Check if patient already exists
   const existingPatients = await ls.getPatientsStack()
-  console.log("Checking for patient with MRN: " + data.patient.mrn)
+  console.log('Checking for patient with MRN: ' + data.patient.mrn)
   console.log(existingPatients)
 
-  if (existingPatients && existingPatients.length > 0
-    &&  existingPatients.find(patientContext => patientContext.patient.mrn === data.patient.mrn)) {
-    console.log("Patient with MRN: " + data.patient.mrn + " already exists")
-    return;
+  if (
+    existingPatients &&
+    existingPatients.length > 0 &&
+    existingPatients.find(
+      patientContext => patientContext.patient.mrn === data.patient.mrn,
+    )
+  ) {
+    console.log('Patient with MRN: ' + data.patient.mrn + ' already exists')
+    return
   }
 
   const patientContextData = await baseHealthService.fetchPatientContextUrl(
@@ -218,12 +233,12 @@ notificationService.on('PatientOpen', async data => {
 })
 
 notificationService.on('PatientClose', data => {
-  console.log("Closing patient with MRN: " + data.patient.mrn)
+  console.log('Closing patient with MRN: ' + data.patient.mrn)
   if (PageManagerFactory.Browser.isDisplayed) {
-    console.log("Removing patient via browser change")
+    console.log('Removing patient via browser change')
     PageManagerFactory.Browser.window.webContents.send('PatientClose', data)
   } else {
-    console.log("Removing patient tab in stack...")
+    console.log('Removing patient tab in stack...')
     const { patient } = data
     const ps = ls
       .getPatientsStack()

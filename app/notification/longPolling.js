@@ -67,16 +67,18 @@ function longPollingFactory(
           )
           break
         case eventsOptions.patientOpen:
-          notificationService.publish(
-            'PatientOpen',
-            JSON.stringify(notificationMessage),
-          )
+          baseHealthService.getClientPatientContext() &&
+            notificationService.publish(
+              'PatientOpen',
+              JSON.stringify(notificationMessage),
+            )
           break
         case eventsOptions.patientClose:
-          notificationService.publish(
-            'PatientClose',
-            JSON.stringify(notificationMessage),
-          )
+          baseHealthService.getClientPatientContext() &&
+            notificationService.publish(
+              'PatientClose',
+              JSON.stringify(notificationMessage),
+            )
           break
         default:
           break
@@ -91,6 +93,10 @@ function longPollingFactory(
       console.log('requesting...')
       var data = {}
       var config = { token, data, timeout: 50000 }
+      console.log(
+        `facility/${configOptions.facilityId}/${configOptions.deviceId}/listen`,
+        'listening',
+      )
       await client(
         `facility/${configOptions.facilityId}/${configOptions.deviceId}/listen`,
         config,

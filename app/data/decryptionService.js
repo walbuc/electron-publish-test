@@ -1,6 +1,4 @@
-const { Console } = require('console')
 const crypto = require('crypto')
-const Algorithm = 'aes-128-cbc'
 const fs = require('fs')
 
 function IsBase64String(str) {

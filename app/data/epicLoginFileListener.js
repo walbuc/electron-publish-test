@@ -21,11 +21,11 @@ function EpicLoginFileListener(
   EventFileEncryptionUsesIV,
   notificationService,
   eventsOptions,
+  baseHealthService,
 ) {
   const EpicLoginFileListener = {
     start() {
       console.log('Started', ecPath)
-      console.log('Started', this.onNewFile)
       chokidar.watch(`${ecPath}/**/*.xml`).on('add', path => {
         log(`File ${path} has been added`)
         //DateTime lastWriteTime = File.GetCreationTime(e.FullPath);
@@ -35,9 +35,7 @@ function EpicLoginFileListener(
           path,
           EventFileEncryptionUsesIV,
         )
-
         var data = this.parseXML(raw)
-
         // LastReadTime = lastWriteTime;
         this.handleNotification(raw, data.Event)
       })
@@ -63,36 +61,59 @@ function EpicLoginFileListener(
             username = dataLogout.CurrentUser
           }
           console.log(this.listenerLoginInfoProvided.user)
-          console.log("Processing logout for current user: " + username)
-
+          console.log('Processing logout for current user: ' + username)
           if (username) {
             this.listenerLoginInfoProvided({})
             msg.message = notification({
               type,
-              practitionerId: username
+              practitionerId: username,
             })
             notificationService.publish('logout', JSON.stringify(msg))
           }
+          msg.message = notification({
+            type,
+          })
+          notificationService.publish('logout', JSON.stringify(msg))
           break
         case eventsOptions.patientOpen:
-          msg.message = notification({ type, patient: this.parsePatient(raw) })
-          notificationService.publish('PatientOpen', JSON.stringify(msg))
-          break
-        case eventsOptions.patientSwitch:
-          console.log("Doing patient switch...")
-          var patient = this.parsePatient(raw)
-          if (patient.mrn) {
-            console.log("Patient switch with MRN: " + patient.mrn + " and name: " + patient.lastname)
-            msg.message = notification({ type: eventsOptions.patientOpen, patient })
+          if (baseHealthService.getClientPatientContext()) {
+            msg.message = notification({
+              type,
+              patient: this.parsePatient(raw),
+            })
             notificationService.publish('PatientOpen', JSON.stringify(msg))
           }
           break
+        case eventsOptions.patientSwitch:
+          if (baseHealthService.getClientPatientContext()) {
+            console.log('Doing patient switch...')
+            var patient = this.parsePatient(raw)
+            if (patient.mrn) {
+              console.log(
+                'Patient switch with MRN: ' +
+                  patient.mrn +
+                  ' and name: ' +
+                  patient.lastname,
+              )
+              msg.message = notification({
+                type: eventsOptions.patientOpen,
+                patient,
+              })
+              notificationService.publish('PatientOpen', JSON.stringify(msg))
+            }
+          }
+          break
         case eventsOptions.patientClose:
-          msg.message = notification({ type, patient: this.parsePatient(raw) })
-          notificationService.publish('PatientClose', JSON.stringify(msg))
+          if (baseHealthService.getClientPatientContext()) {
+            msg.message = notification({
+              type,
+              patient: this.parsePatient(raw),
+            })
+            notificationService.publish('PatientClose', JSON.stringify(msg))
+          }
           break
         default:
-          console.log("Unhandled event type: " + type)
+          console.log('Unhandled event type: ' + type)
           break
       }
     },
@@ -103,8 +124,11 @@ function EpicLoginFileListener(
       var root = xml['EpicStudyData']
 
       var eventVal = root['Event']['_text']
-      if (eventVal == 'PatientOpen' || eventVal == 'PatientClose'
-        || (eventVal == 'PatientSwitch' && root['PatientID'])) {
+      if (
+        eventVal == 'PatientOpen' ||
+        eventVal == 'PatientClose' ||
+        (eventVal == 'PatientSwitch' && root['PatientID'])
+      ) {
         result.mrn = root['PatientID']['_text']
         result.dob = root['PatientBirthDate']['_text']
         var nameParts = root['PatientName']['_text'].split(',')
@@ -134,7 +158,7 @@ function EpicLoginFileListener(
           Event: eventVal,
           AuthenticationData: authData,
           AuthInfo: authInfo,
-          CurrentUser: currentUser
+          CurrentUser: currentUser,
         }
       }
       return { Event: eventVal, AuthenticationData: '', AuthInfo: '' }
