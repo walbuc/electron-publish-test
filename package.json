@@ -4,6 +4,9 @@
   "description": "electron app",
   "main": "./.webpack/main",
   "scripts": {
+    "postinstall": "electron-builder install-app-deps",
+    "build": "electron-builder --mac --windows --linux",
+    "release": "electron-builder --mac --windows --linux --publish always",
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "electron-forge start",
     "package": "electron-forge package",
@@ -46,28 +49,19 @@
     "xml-js": "^1.6.11"
   },
   "build": {
-    "appId": "electron.insightflow",
-    "publish": "github",
+    "appId": "com.insightflow.app",
+    "productName": "Inisightflow",
+    "mac": {
+      "category": ""
+    },
     "dmg": {
-      "contents": [
-        {
-          "x": 110,
-          "y": 150
-        },
-        {
-          "x": 240,
-          "y": 150,
-          "type": "link",
-          "path": "/Applications"
-        }
-      ]
+      "icon": false
     },
-    "appImage": {
-      "license": "LICENSE"
-    },
-    "nsis": {
-      "createDesktopShortcut": "always",
-      "license": "LICENSE"
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "category": "Office"
     }
   },
   "config": {
