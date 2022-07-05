@@ -21,6 +21,8 @@ jobs:
       - name: install dmg-license
         run: npm i dmg-license
         if: matrix.os == 'macos-latest'
+      - name: Build/package Electron app
+        run: npm run package
       - name: Build/release Electron app
         uses: samuelmeuli/action-electron-builder@v1
         with:
