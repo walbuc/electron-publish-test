@@ -19,7 +19,7 @@ jobs:
         with:
           node-version: 14
       - name: install dmg-license
-        run npm i dmg-license
+        run: npm i dmg-license
         if: matrix.os == 'macOS-latest'
       - name: Build/release Electron app
         uses: samuelmeuli/action-electron-builder@v1
