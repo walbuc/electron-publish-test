@@ -1,6 +1,7 @@
+import '../html/css/site.css'
 const remote = require('@electron/remote')
 const { ipcRenderer } = require('electron')
-const mainProcess = remote.require('./main')
+const mainProcess = remote.require('../main')
 const app = remote.app
 const currentWindow = remote.getCurrentWindow()
 const browserView = document.querySelector('#view-renderer')

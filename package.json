@@ -2,10 +2,12 @@
   "name": "desktop-electron-boilerplate",
   "version": "1.0.0",
   "description": "electron app",
-  "main": "app/main.js",
+  "main": "./.webpack/main",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "electron ."
+    "start": "electron-forge start",
+    "package": "electron-forge package",
+    "make": "electron-forge make"
   },
   "repository": {
     "type": "git",
@@ -18,17 +20,83 @@
   },
   "homepage": "https://github.com/Insiteflow/desktop-electron-boilerplate#readme",
   "devDependencies": {
+    "@electron-forge/cli": "^6.0.0-beta.64",
+    "@electron-forge/maker-deb": "^6.0.0-beta.64",
+    "@electron-forge/maker-rpm": "^6.0.0-beta.64",
+    "@electron-forge/maker-squirrel": "^6.0.0-beta.64",
+    "@electron-forge/maker-zip": "^6.0.0-beta.64",
+    "@electron-forge/plugin-auto-unpack-natives": "^6.0.0-beta.64",
+    "@electron-forge/plugin-webpack": "^6.0.0-beta.64",
     "electron": "^18.2.3",
     "eslint": "^8.15.0"
   },
   "dependencies": {
     "@electron/remote": "^2.0.8",
+    "@vercel/webpack-asset-relocator-loader": "^1.7.2",
     "axios": "^0.27.2",
     "chokidar": "^3.5.3",
+    "css-loader": "^6.7.1",
+    "electron-squirrel-startup": "^1.0.0",
     "level": "^8.0.0",
     "lodash": "^4.17.21",
     "minimist": "^1.2.6",
     "qs": "^6.10.3",
+    "style-loader": "^3.3.1",
     "xml-js": "^1.6.11"
+  },
+  "config": {
+    "forge": {
+      "plugins": [
+        [
+          "@electron-forge/plugin-webpack",
+          {
+            "devServer": {
+              "liveReload": true,
+              "hot": true
+            },
+            "mainConfig": "./app/webpack.main.config.js",
+            "renderer": {
+              "config": "./app/webpack.renderer.config.js",
+              "nodeIntegration": true,
+              "entryPoints": [
+                {
+                  "name": "badge_window",
+                  "html": "./app/html/badge.html",
+                  "js": "./app/renderer/badge-renderer.js"
+                },
+                {
+                  "name": "browser_window",
+                  "html": "./app/html/browser.html",
+                  "js": "./app/renderer/browser-renderer.js"
+                }
+              ]
+            }
+          }
+        ]
+      ],
+      "packagerConfig": {},
+      "makers": [
+        {
+          "name": "@electron-forge/maker-squirrel",
+          "config": {
+            "name": "desktop_electron_boilerplate"
+          }
+        },
+        {
+          "name": "@electron-forge/maker-zip",
+          "platforms": [
+            "darwin"
+          ]
+        },
+        {
+          "name": "@electron-forge/maker-deb",
+          "config": {}
+        },
+        {
+          "name": "@electron-forge/maker-rpm",
+          "config": {}
+        }
+      ]
+    }
   }
 }

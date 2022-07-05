@@ -1,8 +1,8 @@
+import '../html/css/site.css'
 const path = require('path')
 const { ipcRenderer, shell } = require('electron')
-
 const remote = require('@electron/remote')
-const mainProcess = remote.require('./main')
+var mainProcess = remote.require('../main')
 
 const currentWindow = remote.getCurrentWindow()
 

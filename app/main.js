@@ -25,6 +25,9 @@ var os = require('os')
 app.commandLine.appendSwitch('remote-debugging-port', '9222')
 app.console = new console.Console(process.stdout, process.stderr)
 
+console.log(process.MAIN_WINDOW_WEBPACK_ENTRY)
+console.log(process.BADGE_WINDOW__WEBPACK_ENTRY)
+
 const ls = LevelFactory('database')
 
 function getOptions() {
@@ -142,8 +145,13 @@ app.whenReady().then(() => {
     // After Badge init i should get a Login event from not service
     // and use practitioner id
     longPollingService.start()
+    PageManagerFactory.Badge.window.loadURL(BADGE_WINDOW_WEBPACK_ENTRY)
+    PageManagerFactory.Badge.open()
+    remote.enable(PageManagerFactory.Badge.window.webContents)
     notificationService.on('login', () => {
-      PageManagerFactory.Badge.window.loadFile(`${__dirname}/html/badge.html`)
+      //PageManagerFactory.Badge.window.loadFile(`${__dirname}/html/badge.html`)
+      // eslint-disable-next-line no-undef
+      PageManagerFactory.Badge.window.loadURL(BADGE_WINDOW_WEBPACK_ENTRY)
       PageManagerFactory.Badge.open()
       remote.enable(PageManagerFactory.Badge.window.webContents)
     })
@@ -167,7 +175,7 @@ async function handlesetPatientsStack(event, ps) {
 }
 
 function showBrowser() {
-  PageManagerFactory.Browser.show(`${__dirname}/html/browser.html`)
+  PageManagerFactory.Browser.show(BROWSER_WINDOW_WEBPACK_ENTRY)
   PageManagerFactory.Browser.window.on('close', function () {
     pageManager.createBrowser()
     PageManagerFactory.Badge.window.webContents.send('browser-close')

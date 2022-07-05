@@ -2,7 +2,6 @@ const epicOptions = {
   login: 'Login',
   patientOpen: 'PatientOpen',
   patientClose: 'PatientClose',
-  patientSwitch: 'PatientSwitch',
   logout: 'Logout',
 }
 
@@ -10,7 +9,6 @@ const cernerOptions = {
   login: 'Login',
   patientOpen: 'chart-open',
   patientClose: 'chart-close',
-  patientSwitch: 'chart-switch',
   logout: 'logout',
 }
 
@@ -31,7 +29,6 @@ function getEventsOptions(integration) {
       ? epicOptions.patientClose
       : cernerOptions.patientClose,
     logout: isEpic ? epicOptions.logout : cernerOptions.logout,
-    patientSwitch: isEpic ? epicOptions.patientSwitch : cernerOptions.patientSwitch
   }
 }
 
@@ -44,6 +41,10 @@ function isNotMac() {
   return process.platform !== 'darwin'
 }
 
+const EPIC = 'epic'
+const GORILLA = 'gorilla'
+const MILLIMAN = 'milliman'
+
 module.exports = {
   epicOptions,
   cernerOptions,
@@ -53,5 +54,8 @@ module.exports = {
   EPIC_INTEGRATION,
   AES_128,
   AES_256,
+  EPIC,
+  GORILLA,
+  MILLIMAN,
   isNotMac,
 }

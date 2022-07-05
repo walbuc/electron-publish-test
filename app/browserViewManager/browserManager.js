@@ -34,7 +34,7 @@ function BrowserManagerFactory(DisplayWidth, DisplayHeight) {
     window,
     isDisplayed: false,
     show: function (url) {
-      this.window.loadFile(url)
+      this.window.loadURL(url)
       this.window.setBounds({
         x: PositionOffX,
         y: DisplayHeight - WindowHeight - 50,

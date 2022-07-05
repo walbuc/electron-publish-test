@@ -8,16 +8,16 @@ function BadgeManagerFactory(
   DisplayHeight,
 ) {
   var badgeOptions = {
-    frame: false,
-    transparent: true,
-    focusable: false,
-    fullscreenable: false,
-    skipTaskbar: true,
-    alwaysOnTop: true,
-    hasShadow: false,
-    resizable: false,
-    width: contentWidth,
-    height: contentHeight,
+    // frame: false,
+    // transparent: true,
+    // focusable: false,
+    // fullscreenable: false,
+    // skipTaskbar: true,
+    // alwaysOnTop: true,
+    // hasShadow: false,
+    // resizable: false,
+    // width: contentWidth,
+    // height: contentHeight,
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
@@ -43,8 +43,8 @@ function BadgeManagerFactory(
     DisplayWidth - BadgeCollapsedWindowWidth + BorderWidth
 
   Window.setBounds({
-    width: CollapsedContentWidth,
-    height: ContentHeight,
+    //width: CollapsedContentWidth,
+    //height: ContentHeight,
     x: CollapsedPositionOff,
     y: DisplayHeight / 2 - ContentHeight,
   })
@@ -54,10 +54,10 @@ function BadgeManagerFactory(
     toggleSize: function (hover) {
       if (hover) {
         Window.setBounds({
-          width: ContentWidth,
-          height: ContentHeight,
-          x: PositionOff,
-          y: DisplayHeight / 2 - ContentHeight,
+          //width: ContentWidth,
+          //height: ContentHeight,
+          //x: PositionOff,
+          //y: DisplayHeight / 2 - ContentHeight,
         })
       } else {
         // Window.setBounds({
@@ -71,14 +71,12 @@ function BadgeManagerFactory(
     quit: function () {
       this.window.close()
     },
-    close: function() {
+    close: function () {
       this.window.hide()
     },
-    open: function() {
+    open: function () {
       this.window.show()
-    }
-
-
+    },
   }
 
   return BadgeManager
