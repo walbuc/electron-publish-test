@@ -6,7 +6,7 @@
   "scripts": {
     "postinstall": "electron-builder install-app-deps",
     "build": "npm run package && electron-builder --windows",
-    "release": "electron-builder --mac --windows --linux --publish always",
+    "release": "npm run package && electron-builder --windows --publish always",
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "electron-forge start",
     "package": "electron-forge package",
